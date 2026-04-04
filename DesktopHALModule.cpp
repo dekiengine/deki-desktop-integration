@@ -9,7 +9,7 @@
 
 #include "DesktopHALModule.h"
 #include "interop/DekiPlugin.h"
-#include "modules/DekiModuleFeatureMeta.h"
+#include "DekiModuleFeatureMeta.h"
 #include "DesktopMemorySetup.h"
 #include "DesktopFileSystemSetup.h"
 #include "reflection/ComponentRegistry.h"
