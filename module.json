@@ -1,7 +1,8 @@
 {
-  "id": "deki:desktop-hal",
+  "id": "deki-desktop-hal",
   "displayName": "Desktop Integration",
   "buildDefine": "DEKI_MODULE_DESKTOP_HAL",
+  "requires": [],
   "features": [
     {"id": "memory", "displayName": "Memory", "buildDefine": "DEKI_FEATURE_DESKTOP_MEMORY_SETUP", "defaultEnabled": true, "componentGuids": ["e5c0f3a2-7d9b-4e1c-8a63-9f2e1d6b4c80"]},
     {"id": "filesystem", "displayName": "File System", "buildDefine": "DEKI_FEATURE_DESKTOP_FILE_SYSTEM_SETUP", "defaultEnabled": true, "componentGuids": ["f6d1a4b3-8e0c-4f2d-9b74-0a3f2e7c5d91"]}
