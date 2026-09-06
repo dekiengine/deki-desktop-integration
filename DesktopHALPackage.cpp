@@ -55,6 +55,11 @@ static void LoadDeployedAssetTable() {
     }
     if (Deki::AssetManager::Get()->LoadAssetLookupTable(s_tableData, static_cast<size_t>(size))) {
         DEKI_LOG_INFO("Simulator: loaded asset_table.bin (%u entries)", Deki::AssetLookupTable::GetEntryCount());
+        // Exported assets live as S:/<guid>, the same layout SDCardComponent
+        // announces on a device. Without the base the manager resolved a bare
+        // GUID next to the exe and every load, the startup scene included,
+        // came back null.
+        Deki::AssetManager::Get()->SetCacheDirectory("S:/");
         Deki::AssetPackReader::Instance().LoadPackIndex("S:/pack_index.bin");
     } else {
         DEKI_LOG_ERROR("Simulator: failed to parse asset_table.bin");
@@ -64,12 +69,15 @@ static void LoadDeployedAssetTable() {
 int main(int argc, char* argv[]) {
     (void)argc; (void)argv;
     setvbuf(stdout, nullptr, _IONBF, 0);  // unbuffered: logs survive a crash
-    // Standalone sim has no editor console; route engine logs to stdout/file.
+    // Standalone sim has no editor console; route engine logs to a file next
+    // to the exe (the working directory, which is also where the flash/ and
+    // storage/ partitions live) and echo them on stdout.
     Deki::LogSystem::SetLogCallback([](Deki::LogLevel level, const std::string& msg,
                                      const char* file, int line) {
         (void)level; (void)file; (void)line;
-        static FILE* lf = fopen("C:/tmp/dekigame.log", "w");
+        static FILE* lf = fopen("dekigame.log", "w");
         if (lf) { fprintf(lf, "%s\n", msg.c_str()); fflush(lf); }
+        printf("%s\n", msg.c_str());
     });
     // Desktop HAL providers must be live before Deki::Engine::Initialize() runs (it calls
     // Deki::Memory/Deki::FileSystem::Initialize()). Set them up here in main() rather than a
