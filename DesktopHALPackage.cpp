@@ -79,7 +79,7 @@ int main(int argc, char* argv[]) {
     // S:/ (./storage/) is now live; load the exported asset registry so the startup
     // scene + assets resolve by key. Must precede the boot scene's startup-scene load.
     LoadDeployedAssetTable();
-    return DekiMain();
+    return Deki::Main();
 }
 
 #endif // SIMULATOR
