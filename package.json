@@ -3,6 +3,9 @@
   "displayName": "Desktop Integration",
   "minEngine": "0.14.0",
   "buildDefine": "DEKI_PACKAGE_DESKTOP_HAL",
+  "platforms": [
+    "native"
+  ],
   "requires": [],
   "features": [],
   "dependencies": {
