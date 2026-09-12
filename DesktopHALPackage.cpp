@@ -45,13 +45,16 @@ static void LoadDeployedAssetTable() {
     if (size <= 0) { fs->CloseFile(handle); DEKI_LOG_WARNING("Simulator: %s is empty", tablePath); return; }
     // Persist for the process lifetime: AssetLookupTable references this buffer.
     static uint8_t* s_tableData = nullptr;
-    if (s_tableData) delete[] s_tableData;
-    s_tableData = new uint8_t[static_cast<size_t>(size)];
+    Deki::Memory::Free(s_tableData);
+    s_tableData = Deki::Memory::AllocateArray<uint8_t>(static_cast<size_t>(size),
+                                                      Deki::MemoryUse::Buffer,
+                                                      "DesktopHAL::assetTable");
+    if (!s_tableData) return;
     size_t read = fs->ReadFile(handle, s_tableData, static_cast<size_t>(size));
     fs->CloseFile(handle);
     if (read != static_cast<size_t>(size)) {
         DEKI_LOG_ERROR("Simulator: short read on %s (%zu of %ld)", tablePath, read, size);
-        delete[] s_tableData; s_tableData = nullptr; return;
+        Deki::Memory::Free(s_tableData); s_tableData = nullptr; return;
     }
     if (Deki::AssetManager::Get()->LoadAssetLookupTable(s_tableData, static_cast<size_t>(size))) {
         DEKI_LOG_INFO("Simulator: loaded asset_table.bin (%u entries)", Deki::AssetLookupTable::GetEntryCount());
