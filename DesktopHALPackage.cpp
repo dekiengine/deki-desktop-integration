@@ -47,7 +47,7 @@ static void LoadDeployedAssetTable() {
     static uint8_t* s_tableData = nullptr;
     Deki::Memory::Free(s_tableData);
     s_tableData = Deki::Memory::AllocateArray<uint8_t>(static_cast<size_t>(size),
-                                                      Deki::MemoryUse::Buffer,
+                                                      Deki::MemoryUse::External,
                                                       "DesktopHAL::assetTable");
     if (!s_tableData) return;
     size_t read = fs->ReadFile(handle, s_tableData, static_cast<size_t>(size));
