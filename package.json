@@ -1,7 +1,7 @@
 {
   "id": "deki-desktop-hal",
   "displayName": "Desktop Integration",
-  "minEngine": "0.14.0",
+  "minEngine": "0.15.0",
   "buildDefine": "DEKI_PACKAGE_DESKTOP_HAL",
   "platformRequires": [
     "desktop-os"
