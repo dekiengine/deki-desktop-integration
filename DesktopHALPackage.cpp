@@ -15,11 +15,7 @@
 #include <deki/reflection/ComponentRegistry.h>
 #include <deki/reflection/ComponentFactory.h>
 
-// =============================================================================
-// Desktop platform entry + HAL bring-up (standalone simulator build)
-// =============================================================================
 #if defined(SIMULATOR)
-
 #include <deki/Main.h>
 #include <deki/LogSystem.h>
 #include <deki/providers/Memory.h>
@@ -31,6 +27,20 @@
 #include <deki/assets/AssetLookupTable.h>
 #include <deki/assets/AssetPackReader.h>
 #include <cstdio>
+#endif
+
+extern void DekiDesktopHAL_RegisterComponents();
+extern int DekiDesktopHAL_GetAutoComponentCount();
+extern const Deki::ComponentMeta* DekiDesktopHAL_GetAutoComponentMeta(int index);
+
+namespace DekiDesktop
+{
+
+// =============================================================================
+// Desktop platform entry + HAL bring-up (standalone simulator build)
+// =============================================================================
+#if defined(SIMULATOR)
+
 
 // Load the deployed asset registry from the SD-card mount (S:/) so scene/asset
 // lookups by key resolve. On a device this is done by SDCardComponent once the SD
@@ -97,12 +107,14 @@ int main(int argc, char* argv[]) {
 #ifdef DEKI_EDITOR
 
 // Auto-generated registration helpers
-extern void DekiDesktopHAL_RegisterComponents();
-extern int DekiDesktopHAL_GetAutoComponentCount();
-extern const Deki::ComponentMeta* DekiDesktopHAL_GetAutoComponentMeta(int index);
 
 // Track if already registered to avoid duplicates
 static bool s_DesktopHALRegistered = false;
+
+
+// The exports below are C symbols at global scope; the package's own
+// registration helpers and statics live in its namespace.
+using namespace DekiDesktop;
 
 extern "C" {
 
@@ -112,13 +124,13 @@ extern "C" {
 DEKI_DESKTOP_HAL_API int DekiDesktopHAL_EnsureRegistered(void)
 {
     if (s_DesktopHALRegistered)
-        return DekiDesktopHAL_GetAutoComponentCount();
+        return ::DekiDesktopHAL_GetAutoComponentCount();
     s_DesktopHALRegistered = true;
 
     // Auto-generated: registers all Desktop HAL components with ComponentRegistry + ComponentFactory
-    DekiDesktopHAL_RegisterComponents();
+    ::DekiDesktopHAL_RegisterComponents();
 
-    return DekiDesktopHAL_GetAutoComponentCount();
+    return ::DekiDesktopHAL_GetAutoComponentCount();
 }
 
 // =============================================================================
@@ -127,7 +139,7 @@ DEKI_DESKTOP_HAL_API int DekiDesktopHAL_EnsureRegistered(void)
 
 DEKI_PLUGIN_API const char* DekiPlugin_GetName(void)
 {
-    return "Deki Desktop HAL Package";
+    return "DekiRendering::Deki Desktop HAL Package";
 }
 
 DEKI_PLUGIN_API const char* DekiPlugin_GetVersion(void)
@@ -151,12 +163,12 @@ DEKI_PLUGIN_API void DekiPlugin_Shutdown(void)
 
 DEKI_PLUGIN_API int DekiPlugin_GetComponentCount(void)
 {
-    return DekiDesktopHAL_GetAutoComponentCount();
+    return ::DekiDesktopHAL_GetAutoComponentCount();
 }
 
 DEKI_PLUGIN_API const Deki::ComponentMeta* DekiPlugin_GetComponentMeta(int index)
 {
-    return DekiDesktopHAL_GetAutoComponentMeta(index);
+    return ::DekiDesktopHAL_GetAutoComponentMeta(index);
 }
 
 DEKI_PLUGIN_API void DekiPlugin_RegisterComponents(void)
@@ -176,3 +188,5 @@ DEKI_DESKTOP_HAL_API const char* DekiDesktopHAL_GetName(void)
 } // extern "C"
 
 #endif // DEKI_EDITOR
+}  // namespace DekiDesktop
+
