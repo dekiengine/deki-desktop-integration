@@ -139,7 +139,7 @@ DEKI_DESKTOP_HAL_API int DekiDesktopHAL_EnsureRegistered(void)
 
 DEKI_PLUGIN_API const char* DekiPlugin_GetName(void)
 {
-    return "DekiRendering::Deki Desktop HAL Package";
+    return "Deki Desktop HAL Package";
 }
 
 DEKI_PLUGIN_API const char* DekiPlugin_GetVersion(void)
