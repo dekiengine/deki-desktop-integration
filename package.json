@@ -1,5 +1,5 @@
 {
-  "id": "deki-desktop-hal",
+  "id": "deki-desktop-integration",
   "displayName": "Desktop Integration",
   "minEngine": "0.15.0",
   "buildDefine": "DEKI_PACKAGE_DESKTOP_HAL",
