@@ -15,3 +15,6 @@ CMakeFiles/
 cmake-build-*/
 
 generated/
+
+# Build and editor leftovers, matching the other packages.
+.deki-package.json
