@@ -10,6 +10,13 @@ alongside one that has them.
 
 ## 0.16.0
 
+### Fixed
+- **`main` stays at global scope, so a simulator build has an entry point.**
+  The namespace move took the program's `main` with it. The C++ runtime looks
+  for `::main` and nothing else will do, so a desktop simulator or firmware
+  binary failed to link, reporting an undefined `WinMain` — an error pointing
+  nowhere near the cause.
+
 ### Changed
 - **Moved into the `DekiDesktop` namespace.** Every component was declared at global
   scope, which made its identity a bare class name — the name a scene file

@@ -78,6 +78,16 @@ static void LoadDeployedAssetTable() {
     }
 }
 
+}  // namespace DekiDesktop
+
+// The program's entry point, at GLOBAL scope. It has to be: the C++ runtime
+// looks for ::main and nothing else will do, so wrapping it in the package's
+// namespace produced DekiDesktop::main and left every simulator and firmware
+// binary with no entry point at all — a link failure naming WinMain, which
+// points nowhere near the cause. The using-directive below keeps the body
+// reaching the package's own helpers unchanged.
+using namespace DekiDesktop;
+
 int main(int argc, char* argv[]) {
     (void)argc; (void)argv;
     setvbuf(stdout, nullptr, _IONBF, 0);  // unbuffered: logs survive a crash
@@ -101,6 +111,9 @@ int main(int argc, char* argv[]) {
     LoadDeployedAssetTable();
     return Deki::Main();
 }
+
+namespace DekiDesktop
+{
 
 #endif // SIMULATOR
 
