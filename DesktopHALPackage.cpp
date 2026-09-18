@@ -21,8 +21,8 @@
 #include <deki/providers/Memory.h>
 #include <deki/providers/FileSystem.h>
 #include <deki/providers/IFileSystem.h>
-#include <deki/platforms/desktop/DesktopMemoryProvider.h>
-#include <deki/platforms/desktop/DesktopFileSystem.h>
+#include <deki/providers/HostMemoryProvider.h>
+#include "DesktopFileSystem.h"
 #include <deki/assets/AssetManager.h>
 #include <deki/assets/AssetLookupTable.h>
 #include <deki/assets/AssetPackReader.h>
@@ -104,7 +104,7 @@ int main(int argc, char* argv[]) {
     // Desktop HAL providers must be live before Deki::Engine::Initialize() runs (it calls
     // Deki::Memory/Deki::FileSystem::Initialize()). Set them up here in main() rather than a
     // static initializer to avoid static-init-order issues with the provider singletons.
-    Deki::Memory::SetBackend(new Deki::DesktopMemoryProvider());
+    Deki::Memory::SetBackend(new Deki::HostMemoryProvider());
     Deki::FileSystem::SetFileSystem(new Deki::DesktopFileSystem());
     // S:/ (./storage/) is now live; load the exported asset registry so the startup
     // scene + assets resolve by key. Must precede the boot scene's startup-scene load.
