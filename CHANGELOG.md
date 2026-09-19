@@ -8,6 +8,20 @@ breaking change bumps the minor across the editor, the engine and every
 package together, so a package with no changes of its own is still released
 alongside one that has them.
 
+## Unreleased
+
+### Changed
+- The desktop simulator's platform (`platforms/native_simulator/`, config and
+  boot scene) is offered by this package; the editor no longer carries it. A
+  new project adopts it on first open.
+- The generated simulator project passes the engine its screen size, colour
+  format and `DEKI_FAST_ATTR` from the platform. The engine used to assume
+  320x240 RGB565 for any simulator.
+- The deploy step (builder ABI 2) is "Run", with nothing to choose; it used to
+  be handed a serial port and ignore it.
+- Native dependencies (`dependencies.native`: version, git, per-host prebuilt
+  archive) are parsed by this backend from the declaration as written.
+
 ## 0.16.0
 
 ### Fixed
