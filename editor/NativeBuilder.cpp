@@ -16,6 +16,7 @@
 #include <filesystem>
 #include <sstream>
 #include <algorithm>
+#include <nlohmann/json.hpp>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -34,6 +35,65 @@ const char* const kNativeExecutableName = "DekiGame.exe";
 #else
 const char* const kNativeExecutableName = "DekiGame";
 #endif
+
+// A release archive of a third-party library for one host, from package.json:
+//   "dependencies": { "native": [ { "name": "SDL3", "version": "3.2.8",
+//       "git": "https://github.com/libsdl-org/SDL.git",
+//       "prebuilt": { "windows-mingw": { "url": "...", "sha256": "...",
+//           "cmakeDir": "SDL3-3.2.8/x86_64-w64-mingw32/lib/cmake/SDL3",
+//           "includeDir": "SDL3-3.2.8/x86_64-w64-mingw32/include" } } } ] }
+// Unpacked under <project>/generated/deps and consumed through its CMake
+// package instead of being built from source.
+//
+// This shape is this backend's own. The editor hands over each declaration as
+// written (CMakeGen::FrameworkDependency) and does not know what is in it.
+struct NativePrebuilt
+{
+    std::string url;         // https archive
+    std::string sha256;      // pinned; an unpinned archive is not used
+    std::string cmakeDir;    // directory holding <Name>Config.cmake, relative to the archive root
+    std::string includeDir;  // public headers, relative to the archive root
+};
+
+// A third-party library a package needs in a desktop build. The version is
+// the package's to choose; the builder only follows it.
+struct NativeDependency
+{
+    std::string name;     // e.g. "SDL3"
+    std::string version;  // e.g. "3.2.8"
+    std::string git;      // source fallback: repository, built at tag release-<version>
+    std::map<std::string, NativePrebuilt> prebuilt;  // host key ("windows-mingw", "linux", "macos") -> archive
+};
+
+// Only the object form describes a library to fetch. A bare string under
+// "native" names nothing this backend can act on, and never did.
+bool ParseNativeDependency(const CMakeGen::FrameworkDependency& declared, NativeDependency& out)
+{
+    if (declared.json.empty())
+        return false;
+
+    const nlohmann::json dep = nlohmann::json::parse(declared.json, nullptr, /*allow_exceptions*/ false);
+    if (!dep.is_object())
+        return false;
+
+    out.name = declared.name;
+    out.version = dep.value("version", "");
+    out.git = dep.value("git", "");
+    if (dep.contains("prebuilt") && dep["prebuilt"].is_object())
+    {
+        for (auto& [host, archive] : dep["prebuilt"].items())
+        {
+            if (!archive.is_object()) continue;
+            NativePrebuilt pre;
+            pre.url = archive.value("url", "");
+            pre.sha256 = archive.value("sha256", "");
+            pre.cmakeDir = archive.value("cmakeDir", "");
+            pre.includeDir = archive.value("includeDir", "");
+            out.prebuilt[host] = pre;
+        }
+    }
+    return true;
+}
 }  // namespace
 
 
@@ -51,11 +111,6 @@ NativeBuilder::~NativeBuilder()
 // ============================================================================
 // Identity
 // ============================================================================
-
-std::vector<std::string> NativeBuilder::GetSupportedTargets() const
-{
-    return { "native" };
-}
 
 std::string NativeBuilder::GetBuildDirectory(const std::string& projectPath) const
 {
@@ -94,10 +149,9 @@ void NativeBuilder::Build(const std::string& projectPath, BuildOutputCallback ou
                      { DoBuild(projectPath, outputCallback, progressCallback); });
 }
 
-void NativeBuilder::Flash(const std::string& projectPath, const std::string& /*port*/,
-                          BuildOutputCallback outputCallback, BuildProgressCallback progressCallback)
+void NativeBuilder::Deploy(const std::string& projectPath, const std::string& /*deployTargetId*/,
+                           BuildOutputCallback outputCallback, BuildProgressCallback progressCallback)
 {
-    // "Flash" for native = run the built executable
     std::string buildDir = GetBuildDirectory(projectPath);
 
     // The generated project is configured with -G Ninja, which is
@@ -148,13 +202,6 @@ void NativeBuilder::Clean(const std::string& projectPath, BuildOutputCallback ou
 {
     RunOnBuildThread([this, projectPath, outputCallback, progressCallback]()
                      { DoClean(projectPath, outputCallback, progressCallback); });
-}
-
-void NativeBuilder::SetTarget(const std::string& /*projectPath*/, const std::string& /*target*/,
-                              BuildOutputCallback /*outputCallback*/,
-                              BuildProgressCallback /*progressCallback*/)
-{
-    // No-op: native has only one target
 }
 
 // ============================================================================
@@ -378,8 +425,13 @@ bool NativeBuilder::PrepareNativeDependencies(const std::string& projectPath, Bu
     for (const auto& pkg : allPackages)
     {
         if (activeIds.count(pkg.id) == 0) continue;
-        for (const auto& dep : pkg.nativeDeps)
+        const auto mine = pkg.frameworkDeps.find(GetFrameworkId());
+        if (mine == pkg.frameworkDeps.end()) continue;
+        for (const auto& declared : mine->second)
         {
+            NativeDependency dep;
+            if (!ParseNativeDependency(declared, dep)) continue;
+
             std::string reason;
             if (!SafeNames::IsSafeName(dep.name, reason) || !SafeNames::IsSafeName(dep.version, reason))
             {
@@ -394,7 +446,7 @@ bool NativeBuilder::PrepareNativeDependencies(const std::string& projectPath, Bu
             const auto pit = dep.prebuilt.find(host);
             if (pit != dep.prebuilt.end())
             {
-                const CMakeGen::NativePrebuilt& pre = pit->second;
+                const NativePrebuilt& pre = pit->second;
                 const fs::path dest = depsRoot / (dep.name + "-" + dep.version);
                 const fs::path marker = dest / ".deki-prebuilt";
                 std::error_code ec;
@@ -1075,7 +1127,8 @@ extern "C" {
 DEKI_BUILDER_API const DekiBuilderAbi* DekiBuilder_GetAbi(void)
 {
     static const DekiBuilderAbi abi =
-        DekiBuilder_ThisAbi((uint32_t)sizeof(DekiEditor::PlatformConfig));
+        DekiBuilder_ThisAbi((uint32_t)sizeof(DekiEditor::PlatformConfig),
+                            (uint32_t)sizeof(DekiEditor::CMakeGen::PackageEntry));
     return &abi;
 }
 

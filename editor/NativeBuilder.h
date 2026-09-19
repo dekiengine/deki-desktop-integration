@@ -27,14 +27,15 @@ public:
     // Core operations
     void Build(const std::string& projectPath, BuildOutputCallback outputCallback = nullptr,
                BuildProgressCallback progressCallback = nullptr) override;
-    void Flash(const std::string& projectPath, const std::string& port,
-               BuildOutputCallback outputCallback = nullptr,
-               BuildProgressCallback progressCallback = nullptr) override;
+    // Deploy = run what was built, on this machine. Nothing to aim it at, so
+    // no targets are enumerated and the UI shows no selector.
+    bool SupportsDeploy() const override { return true; }
+    const char* GetDeployLabel() const override { return "Run"; }
+    void Deploy(const std::string& projectPath, const std::string& deployTargetId,
+                BuildOutputCallback outputCallback = nullptr,
+                BuildProgressCallback progressCallback = nullptr) override;
     void Clean(const std::string& projectPath, BuildOutputCallback outputCallback = nullptr,
                BuildProgressCallback progressCallback = nullptr) override;
-    void SetTarget(const std::string& projectPath, const std::string& target,
-                   BuildOutputCallback outputCallback = nullptr,
-                   BuildProgressCallback progressCallback = nullptr) override;
 
     // Toolchain
     bool IsToolchainInstalled() const override;
@@ -59,7 +60,11 @@ public:
     }
 
     std::string GetFrameworkId() const override { return "native"; }
-    std::vector<std::string> GetSupportedTargets() const override;
+    // DeployPartitions copies this beside the executable as flash/.
+    std::string GetBootPayloadDirectory(const std::string& projectPath) const override
+    {
+        return GetBuildDirectory(projectPath) + "/spiffs_data";
+    }
     std::string GetBuildDirectory(const std::string& projectPath) const override;
 
     // Platform editor UI
