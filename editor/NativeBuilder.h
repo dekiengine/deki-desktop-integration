@@ -1,5 +1,7 @@
 #pragma once
 
+#include <deki-editor/IconsTabler.h>
+
 #include <deki-editor/build/FirmwareBuilderBase.h>
 #include "NativeToolchain.h"
 #include <map>
@@ -47,6 +49,15 @@ public:
 
     // Identity
     const char* GetName() const override { return "Native (Desktop)"; }
+    // Shown in the platform editor's framework picker. The editor used to
+    // hold these strings for the backends it shipped; a backend describes
+    // itself now, so one it has never heard of is not anonymous.
+    const char* GetIcon() const override { return ICON_TI_DEVICE_DESKTOP; }
+    const char* GetDescription() const override
+    {
+        return "Run your project on this desktop, through the SDL3 simulator";
+    }
+
     std::string GetFrameworkId() const override { return "native"; }
     std::vector<std::string> GetSupportedTargets() const override;
     std::string GetBuildDirectory(const std::string& projectPath) const override;
