@@ -638,7 +638,6 @@ bool NativeBuilder::GenerateCMakeLists(const std::string& projectPath,
 
     // Add engine as subdirectory (builds as static library without DEKI_EDITOR)
     file << "# Engine (static library, non-editor mode)\n";
-    file << "set(SIMULATOR ON CACHE BOOL \"\" FORCE)\n";
     file << "set(DEKI_TRANSFORM_2D " << (transformWidth != CMakeGen::TransformWidth::None ? "ON" : "OFF")
          << " CACHE BOOL \"\" FORCE)\n";
     file << "set(DEKI_TRANSFORM_3D " << (transformWidth == CMakeGen::TransformWidth::ThreeD ? "ON" : "OFF")
@@ -648,6 +647,37 @@ bool NativeBuilder::GenerateCMakeLists(const std::string& projectPath,
 
     // Make engine link SDL3 and OpenGL (needed by SDL3 package)
     file << "target_link_libraries(deki-engine-core PUBLIC ${DEKI_SDL3_TARGET} OpenGL::GL)\n\n";
+
+    // What the engine has to be told about its target. The engine's own CMake
+    // used to do this under `if(DEFINED SIMULATOR)`: it knew this target by
+    // name, forced three packages' defines on (so a stripped package's define
+    // came back in through the engine), and compiled itself for 320x240 RGB565
+    // whatever the platform said - so Engine.cpp set the renderer up at one
+    // size while the game was built for another. The target's backend says it
+    // now, from the platform.
+    {
+        // Reaches a generated CMake file, and a platform JSON can arrive in a
+        // board pack or a package.
+        const std::string colorFormat = config.colorFormat.empty() ? std::string("RGB565") : config.colorFormat;
+        for (char c : colorFormat)
+        {
+            const bool ok = (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '_';
+            if (!ok)
+            {
+                DEKI_LOG_ERROR("NativeBuilder: colorFormat '%s' is not an identifier; refusing to generate",
+                               config.colorFormat.c_str());
+                return false;
+            }
+        }
+        file << "# The engine, told about this target (it no longer assumes one)\n";
+        file << "target_compile_definitions(deki-engine-core PUBLIC\n";
+        file << "    SIMULATOR\n";
+        file << "    \"DEKI_SCREEN_WIDTH=" << config.screenWidth << "\"\n";
+        file << "    \"DEKI_SCREEN_HEIGHT=" << config.screenHeight << "\"\n";
+        file << "    \"DEKI_DEFAULT_COLOR_FORMAT=Deki::ColorFormat::" << colorFormat << "\"\n";
+        file << "    \"DEKI_ENABLE_TRANSPARENCY=true\"\n";
+        file << "    \"DEKI_FAST_ATTR=\")\n";
+    }
 
     // The engine subdir only defines DEKI_LOG_ENABLED for editor builds; the desktop
     // simulator is a debugging tool, so route engine-core logs through the callback too.

@@ -1,0 +1,27 @@
+{
+  "bootScene": "platforms/native_simulator/boot.scene",
+  "cxxFlags": [
+    "-O0",
+    "-g"
+  ],
+  "defines": [
+    "SIMULATOR",
+    "DEBUG",
+    "DEKI_LOG_ENABLED"
+  ],
+  "displayBus": "SOFTWARE",
+  "displayDriver": "SDL3",
+  "displayName": "Desktop Simulator (SDL3)",
+  "family": "native",
+  "framework": "native",
+  "id": "native_simulator",
+  "provides": [
+    "desktop-os",
+    "posix-process",
+    "filesystem",
+    "threads",
+    "sdl3"
+  ],
+  "screenHeight": 240,
+  "screenWidth": 320
+}
