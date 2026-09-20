@@ -1,28 +1,25 @@
 # Deki Desktop Integration
 
-Documentation: https://dekiengine.github.io/deki-desktop-integration/ (components and properties, generated from the code)
+Docs: https://dekiengine.github.io/deki-desktop-integration/ (components and properties, generated from the code)
 
 Desktop platform HAL (Hardware Abstraction Layer) for the Deki Engine: memory management and filesystem support.
 
-Part of the [Deki Engine](https://github.com/dekiengine/deki-engine) package ecosystem.
+Part of [Deki Engine](https://github.com/dekiengine/deki-engine).
 
 ## Namespace
 
-This package's types live in `DekiDesktop`. Scene files store the qualified
-name, so a component is `DekiDesktop::SomeComponent` there, and code naming one
-needs the namespace:
+Types live in `DekiDesktop`. Scene files store the qualified name, and so does code:
 
 ```cpp
 using namespace DekiDesktop;
 obj->AddComponent<SomeComponent>();
 ```
 
-Scenes saved before 0.16.0 used bare names and still load: every component
-records what it used to be called, and a save writes the current name.
+Scenes saved before 0.16.0 used bare names and still load; saving writes the current one.
 
-## Installation
+## Install
 
-Install via the Package Manager inside the Deki Editor.
+Package Manager in the Deki Editor, or `DekiEditor --packages-add deki-desktop-integration <project>`.
 
 ## Dependencies
 
@@ -30,4 +27,4 @@ None.
 
 ## License
 
-Licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE) for details.
+Apache 2.0. See [LICENSE](LICENSE).
