@@ -538,6 +538,8 @@ bool NativeBuilder::GenerateCMakeLists(const std::string& projectPath,
     // components' sources stay out of the package globs and their headers out
     // of the reflection codegen, so nothing references what is not compiled.
     const StripPlan strip = ComputeStripPlan(projectPath, m_PlatformConfig.id);
+    for (const auto& w : strip.warnings)
+        DEKI_LOG_WARNING("%s", w.c_str());
     std::string stripSourceRegex;
     for (const auto& rx : strip.SourceExcludeRegexes())
         stripSourceRegex += (stripSourceRegex.empty() ? "" : "|") + rx;
