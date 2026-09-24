@@ -9,7 +9,7 @@
           "components": [
             {
               "class": "SDL3DisplaySetup",
-              "properties": { "windowWidth": 320, "windowHeight": 240, "windowScale": 2 },
+              "properties": { "windowScale": 2 },
               "type": "DekiSdl3::SDL3DisplaySetup"
             }
           ],
