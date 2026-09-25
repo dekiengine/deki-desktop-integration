@@ -11,10 +11,10 @@ alongside one that has them.
 ## Unreleased
 
 ### Changed
+- The simulator build defines `DEKI_SCREEN_COLOR_FORMAT` (the platform's
+  colorFormat) for the SDL window, instead of a format for the engine.
 - The simulator's boot scene sets only the window scale; the screen is the
   platform's.
-
-### Changed
 - The desktop simulator's platform (`platforms/native_simulator/`, config and
   boot scene) is offered by this package; the editor no longer carries it. A
   new project adopts it on first open.

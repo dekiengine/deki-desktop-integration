@@ -676,7 +676,8 @@ bool NativeBuilder::GenerateCMakeLists(const std::string& projectPath,
         file << "    SIMULATOR\n";
         file << "    \"DEKI_SCREEN_WIDTH=" << config.screenWidth << "\"\n";
         file << "    \"DEKI_SCREEN_HEIGHT=" << config.screenHeight << "\"\n";
-        file << "    \"DEKI_DEFAULT_COLOR_FORMAT=Deki::ColorFormat::" << colorFormat << "\"\n";
+        // The screen the SDL window emulates: its size and pixel format.
+        file << "    \"DEKI_SCREEN_COLOR_FORMAT=Deki::ColorFormat::" << colorFormat << "\"\n";
         file << "    \"DEKI_ENABLE_TRANSPARENCY=true\"\n";
         file << "    \"DEKI_FAST_ATTR=\")\n";
     }
