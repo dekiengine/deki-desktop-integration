@@ -11,6 +11,9 @@ alongside one that has them.
 ## Unreleased
 
 ### Changed
+- The simulator reads the game's assets from `flash/assets/` (`F:/assets/`),
+  which the build fills; `--export` is no longer needed first, and nothing is
+  copied into `storage/`, which is the game's own to write.
 - The simulator build defines `DEKI_SCREEN_COLOR_FORMAT` (the platform's
   colorFormat) for the SDL window, instead of a format for the engine.
 - The simulator's boot scene sets only the window scale; the screen is the

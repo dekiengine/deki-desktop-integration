@@ -23,9 +23,6 @@
 #include <deki/providers/IFileSystem.h>
 #include <deki/providers/HostMemoryProvider.h>
 #include "DesktopFileSystem.h"
-#include <deki/assets/AssetManager.h>
-#include <deki/assets/AssetLookupTable.h>
-#include <deki/assets/AssetPackReader.h>
 #include <cstdio>
 #endif
 
@@ -41,42 +38,6 @@ namespace DekiDesktop
 // =============================================================================
 #if defined(SIMULATOR)
 
-
-// Load the deployed asset registry from the SD-card mount (S:/) so scene/asset
-// lookups by key resolve. On a device this is done by SDCardComponent once the SD
-// mounts; the simulator's S:/ is just ./storage/, already live via DesktopFileSystem.
-static void LoadDeployedAssetTable() {
-    const char* tablePath = "S:/asset_table.bin";
-    Deki::IFileSystem* fs = Deki::FileSystem::GetFileSystemForPath(tablePath);
-    if (!fs) { DEKI_LOG_WARNING("Simulator: no filesystem for %s", tablePath); return; }
-    auto handle = fs->OpenFile(tablePath, Deki::IFileSystem::OpenMode::READ_BINARY);
-    if (!handle) { DEKI_LOG_WARNING("Simulator: %s not found", tablePath); return; }
-    long size = fs->GetFileSize(handle);
-    if (size <= 0) { fs->CloseFile(handle); DEKI_LOG_WARNING("Simulator: %s is empty", tablePath); return; }
-    // Persist for the process lifetime: AssetLookupTable references this buffer.
-    static uint8_t* s_tableData = nullptr;
-    Deki::Memory::Free(s_tableData);
-    s_tableData = Deki::Memory::AllocateArray<uint8_t>(static_cast<size_t>(size),
-                                                      Deki::Memory::External);
-    if (!s_tableData) return;
-    size_t read = fs->ReadFile(handle, s_tableData, static_cast<size_t>(size));
-    fs->CloseFile(handle);
-    if (read != static_cast<size_t>(size)) {
-        DEKI_LOG_ERROR("Simulator: short read on %s (%zu of %ld)", tablePath, read, size);
-        Deki::Memory::Free(s_tableData); s_tableData = nullptr; return;
-    }
-    if (Deki::AssetManager::Get()->LoadAssetLookupTable(s_tableData, static_cast<size_t>(size))) {
-        DEKI_LOG_INFO("Simulator: loaded asset_table.bin (%u entries)", Deki::AssetLookupTable::GetEntryCount());
-        // Exported assets live as S:/<guid>, the same layout SDCardComponent
-        // announces on a device. Without the base the manager resolved a bare
-        // GUID next to the exe and every load, the startup scene included,
-        // came back null.
-        Deki::AssetManager::Get()->SetCacheDirectory("S:/");
-        Deki::AssetPackReader::Instance().LoadPackIndex("S:/pack_index.bin");
-    } else {
-        DEKI_LOG_ERROR("Simulator: failed to parse asset_table.bin");
-    }
-}
 
 }  // namespace DekiDesktop
 
@@ -105,10 +66,8 @@ int main(int argc, char* argv[]) {
     // Deki::Memory/Deki::FileSystem::Initialize()). Set them up here in main() rather than a
     // static initializer to avoid static-init-order issues with the provider singletons.
     Deki::Memory::SetBackend(new Deki::HostMemoryProvider());
+    // Engine::Initialize() then finds the assets in F:/assets/ (./flash/assets/).
     Deki::FileSystem::SetFileSystem(new Deki::DesktopFileSystem());
-    // S:/ (./storage/) is now live; load the exported asset registry so the startup
-    // scene + assets resolve by key. Must precede the boot scene's startup-scene load.
-    LoadDeployedAssetTable();
     return Deki::Main();
 }
 

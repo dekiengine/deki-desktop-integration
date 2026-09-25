@@ -1010,20 +1010,19 @@ bool NativeBuilder::GenerateCMakeLists(const std::string& projectPath,
     return CMakeGen::WriteIfChanged(fs::path(buildDir) / "CMakeLists.txt", file.str());
 }
 
-// Copy the two partitions next to the exe so the simulator's virtual mounts
-// resolve (DesktopFileSystem maps them relative to the exe's directory, which
-// Flash() uses as the working directory):
-//   flash/   <- SPIFFS export  (F:/ : dproject.bin + boot scene), written by
-//               FirmwareBuildService into <build>/spiffs_data before the build
-//   storage/ <- SD-card export (S:/ : the assets), written by --export /
-//               AssetExporter::ExportToStorage into <project>/storage
+// Copy the internal storage next to the exe so the simulator's F:/ resolves
+// (DesktopFileSystem maps it relative to the exe's directory, which Flash()
+// uses as the working directory):
+//   flash/ <- project_data.bin, the boot scene and assets/ (F:/assets/),
+//             written by FirmwareBuildService into <build>/spiffs_data
+// S:/ (storage/) is the game's own to write; a build puts nothing there.
 bool NativeBuilder::DeployPartitions(const std::string& projectPath, const std::string& buildDir,
                                      BuildOutputCallback outputCallback)
 {
     const fs::path binDir = fs::path(buildDir) / "build" / "bin";
+    (void)projectPath;
     const std::pair<fs::path, const char*> partitions[] = {
         { fs::path(buildDir) / "spiffs_data", "flash" },
-        { fs::path(projectPath) / "storage", "storage" },
     };
     bool ok = true;
     for (const auto& [source, name] : partitions)
@@ -1033,7 +1032,7 @@ bool NativeBuilder::DeployPartitions(const std::string& projectPath, const std::
         {
             if (outputCallback)
                 outputCallback(std::string("No ") + name + " partition to deploy (" + source.string() +
-                                   " does not exist" + (std::string(name) == "storage" ? "; run --export first)" : ")"),
+                                   " does not exist)",
                                false);
             continue;
         }
