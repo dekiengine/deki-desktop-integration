@@ -1,4 +1,5 @@
 #include "NativeToolchain.h"
+#include <deki-editor/ShellCommand.h>
 #include <filesystem>
 #include <algorithm>
 #include <cstring>
@@ -253,11 +254,9 @@ bool NativeToolchain::IsInstalled() const
     // Also check PATH as fallback for cmake
     if (!hasCMake)
     {
-#ifdef _WIN32
-        hasCMake = system("cmake --version >nul 2>&1") == 0;
-#else
-        hasCMake = system("cmake --version >/dev/null 2>&1") == 0;
-#endif
+        // RunShellCommand, not system(): system() opens a console window from
+        // a windowed program.
+        hasCMake = DekiEditor::RunShellCommand("cmake --version", "", [](const std::string&) {}) == 0;
     }
 
     return hasCompiler && hasCMake;
