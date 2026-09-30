@@ -8,9 +8,10 @@ breaking change bumps the minor across the editor, the engine and every
 package together, so a package with no changes of its own is still released
 alongside one that has them.
 
-## Unreleased
+## 0.17.0
 
 ### Changed
+- `minEngine` 0.17.0. Reflection ABI 20: the package must be rebuilt.
 - The simulator reads the game's assets from `flash/assets/` (`F:/assets/`),
   which the build fills; `--export` is no longer needed first, and nothing is
   copied into `storage/`, which is the game's own to write.
