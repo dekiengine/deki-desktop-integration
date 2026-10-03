@@ -1,5 +1,7 @@
 #include "NativeBuilder.h"
 #include <deki-editor/build/BuilderWidgets.h>
+#include <deki-editor/EditorTheme.h>
+#include <deki-editor/EditorUI.h>
 #include <deki/LogSystem.h>
 #include <deki-editor/SafeNames.h>
 #include <deki-editor/EditorHttpUtils.h>
@@ -1072,38 +1074,34 @@ public:
     void Draw() override
     {
         // --- Display ---
-        if (ImGui::CollapsingHeader("Display", ImGuiTreeNodeFlags_DefaultOpen))
+        if (DekiEditor::SchematicSectionBegin("Display"))
         {
-            ImGui::Indent();
-
-            ImGui::Text("Screen Resolution");
-            ImGui::SetNextItemWidth(100.0f * ImGui::GetWindowDpiScale());
-            ImGui::InputInt("##ScreenWidth", &m_ScreenWidth);
+            DekiEditor::BeginPropertyContext();
+            DekiEditor::EditorUI::Get().PropertyRow("Resolution");
+            const float gap = ImGui::GetStyle().ItemSpacing.x;
+            const float fieldW = (ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("x").x - gap * 2.0f) * 0.5f;
+            ImGui::SetNextItemWidth(fieldW);
+            DekiEditor::SchematicDragInt("##ScreenWidth", &m_ScreenWidth, 1.0f, 1, 16384);
+            ImGui::SameLine(0.0f, gap);
+            ImGui::AlignTextToFramePadding();
+            ImGui::TextColored(DekiEditor::Palette::Dim, "x");
+            ImGui::SameLine(0.0f, gap);
+            ImGui::SetNextItemWidth(fieldW);
+            DekiEditor::SchematicDragInt("##ScreenHeight", &m_ScreenHeight, 1.0f, 1, 16384);
             if (m_ScreenWidth < 1) m_ScreenWidth = 1;
-            ImGui::SameLine();
-            ImGui::Text("x");
-            ImGui::SameLine();
-            ImGui::SetNextItemWidth(100.0f * ImGui::GetWindowDpiScale());
-            ImGui::InputInt("##ScreenHeight", &m_ScreenHeight);
             if (m_ScreenHeight < 1) m_ScreenHeight = 1;
-
-            ImGui::Unindent();
+            DekiEditor::EndPropertyContext();
+            DekiEditor::SchematicSectionEnd();
         }
 
-        ImGui::Spacing();
-
         // --- Compiler & Build ---
-        if (ImGui::CollapsingHeader("Compiler & Build"))
+        if (DekiEditor::SchematicSectionBegin("Compiler & Build", 0))
         {
-            ImGui::Indent();
             DrawStringListEditor("Preprocessor Defines", m_Defines, m_NewDefineBuf, sizeof(m_NewDefineBuf));
-            ImGui::Spacing();
             DrawStringListEditor("C Flags", m_CFlags, m_NewCFlagBuf, sizeof(m_NewCFlagBuf));
-            ImGui::Spacing();
             DrawStringListEditor("C++ Flags", m_CxxFlags, m_NewCxxFlagBuf, sizeof(m_NewCxxFlagBuf));
-            ImGui::Spacing();
             DrawStringListEditor("Linker Flags", m_LinkFlags, m_NewLinkFlagBuf, sizeof(m_NewLinkFlagBuf));
-            ImGui::Unindent();
+            DekiEditor::SchematicSectionEnd();
         }
     }
 
