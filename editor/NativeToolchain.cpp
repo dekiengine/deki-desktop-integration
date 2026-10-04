@@ -7,6 +7,8 @@
 #ifdef _WIN32
 #include <windows.h>
 #include <shlobj.h>
+#else
+#include <sys/wait.h>
 #endif
 
 namespace fs = std::filesystem;
@@ -469,7 +471,12 @@ int NativeToolchain::ExecuteCommand(const std::string& command, const std::strin
         }
     }
 
-    return pclose(pipe);
+    // pclose returns a wait status, not the exit code: a build exiting 2 was
+    // reported as "exit code 512".
+    const int status = pclose(pipe);
+    if (status == -1)
+        return -1;
+    return WIFEXITED(status) ? WEXITSTATUS(status) : 128 + WTERMSIG(status);
 }
 
 #endif

@@ -8,6 +8,12 @@ breaking change bumps the minor across the editor, the engine and every
 package together, so a package with no changes of its own is still released
 alongside one that has them.
 
+## Unreleased
+
+### Fixed
+- A failed build on Linux or macOS reports the build's exit code. It reported
+  the raw wait status, so a build that exited 2 said "exit code 512".
+
 ## 0.17.0
 
 ### Changed
