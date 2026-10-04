@@ -37,8 +37,7 @@ public:
     std::vector<ToolchainComponent> GetComponents() const;
 
     // Execute command
-    int ExecuteCommand(const std::string& command, const std::string& workDir,
-                       BuildOutputCallback outputCallback,
+    int ExecuteCommand(const std::string& command, const std::string& workDir, BuildOutputCallback outputCallback,
                        std::atomic<bool>& cancelRequested);
 
     // Silent process execution helper (Windows)

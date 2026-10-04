@@ -44,8 +44,7 @@ public:
     std::vector<ToolchainComponent> GetToolchainComponents() const override;
 
     // Build file generation
-    bool GenerateBuildFiles(const std::string& projectPath,
-                            const PlatformConfig& config,
+    bool GenerateBuildFiles(const std::string& projectPath, const PlatformConfig& config,
                             const std::vector<std::string>& packageDefines) override;
 
     // Identity

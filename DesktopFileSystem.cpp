@@ -7,7 +7,6 @@
 namespace Deki
 {
 
-
 DesktopFileSystem::DesktopFileSystem()
     : m_Initialized(false)
 {
@@ -21,7 +20,9 @@ DesktopFileSystem::~DesktopFileSystem()
 bool DesktopFileSystem::Initialize()
 {
     if (m_Initialized)
+    {
         return true;
+    }
 
     // Files are relative to the current working directory. The simulator mirrors
     // the device's two storage mounts:
@@ -40,7 +41,10 @@ void DesktopFileSystem::Shutdown()
 
 std::string DesktopFileSystem::ConvertPathInternal(const char* virtualPath)
 {
-    if (!virtualPath) return "";
+    if (!virtualPath)
+    {
+        return "";
+    }
 
     std::string path(virtualPath);
     // Convert "S:/..." to "./storage/..." (SD card mount)
@@ -58,7 +62,10 @@ std::string DesktopFileSystem::ConvertPathInternal(const char* virtualPath)
 
 IFileSystem::FileHandle DesktopFileSystem::OpenFile(const char* path, OpenMode mode)
 {
-    if (!m_Initialized || !path) return nullptr;
+    if (!m_Initialized || !path)
+    {
+        return nullptr;
+    }
 
     std::string real_path = ConvertPathInternal(path);
     const char* mode_str = "";
@@ -66,16 +73,12 @@ IFileSystem::FileHandle DesktopFileSystem::OpenFile(const char* path, OpenMode m
 
     switch (mode)
     {
-        case OpenMode::READ_BINARY:
-            mode_str = "rb";
-            break;
+        case OpenMode::READ_BINARY: mode_str = "rb"; break;
         case OpenMode::WRITE_BINARY:
             mode_str = "wb";
             is_write = true;
             break;
-        case OpenMode::READ_TEXT:
-            mode_str = "r";
-            break;
+        case OpenMode::READ_TEXT: mode_str = "r"; break;
         case OpenMode::WRITE_TEXT:
             mode_str = "w";
             is_write = true;
@@ -86,7 +89,10 @@ IFileSystem::FileHandle DesktopFileSystem::OpenFile(const char* path, OpenMode m
     {
         std::error_code ec;
         std::filesystem::path parent = std::filesystem::path(real_path).parent_path();
-        if (!parent.empty()) std::filesystem::create_directories(parent, ec);
+        if (!parent.empty())
+        {
+            std::filesystem::create_directories(parent, ec);
+        }
     }
 
     FILE* file = fopen(real_path.c_str(), mode_str);
@@ -103,32 +109,35 @@ void DesktopFileSystem::CloseFile(FileHandle handle)
 
 size_t DesktopFileSystem::ReadFile(FileHandle handle, void* buffer, size_t size)
 {
-    if (!handle || !buffer) return 0;
+    if (!handle || !buffer)
+    {
+        return 0;
+    }
     return fread(buffer, 1, size, static_cast<FILE*>(handle));
 }
 
 size_t DesktopFileSystem::WriteFile(FileHandle handle, const void* buffer, size_t size)
 {
-    if (!handle || !buffer) return 0;
+    if (!handle || !buffer)
+    {
+        return 0;
+    }
     return fwrite(buffer, 1, size, static_cast<FILE*>(handle));
 }
 
 long DesktopFileSystem::SeekFile(FileHandle handle, long offset, SeekOrigin origin)
 {
-    if (!handle) return -1;
+    if (!handle)
+    {
+        return -1;
+    }
 
     int whence = SEEK_SET;
     switch (origin)
     {
-        case SeekOrigin::BEGIN:
-            whence = SEEK_SET;
-            break;
-        case SeekOrigin::CURRENT:
-            whence = SEEK_CUR;
-            break;
-        case SeekOrigin::END:
-            whence = SEEK_END;
-            break;
+        case SeekOrigin::BEGIN: whence = SEEK_SET; break;
+        case SeekOrigin::CURRENT: whence = SEEK_CUR; break;
+        case SeekOrigin::END: whence = SEEK_END; break;
     }
 
     if (fseek(static_cast<FILE*>(handle), offset, whence) == 0)
@@ -140,13 +149,19 @@ long DesktopFileSystem::SeekFile(FileHandle handle, long offset, SeekOrigin orig
 
 long DesktopFileSystem::TellFile(FileHandle handle)
 {
-    if (!handle) return -1;
+    if (!handle)
+    {
+        return -1;
+    }
     return ftell(static_cast<FILE*>(handle));
 }
 
 long DesktopFileSystem::GetFileSize(FileHandle handle)
 {
-    if (!handle) return -1;
+    if (!handle)
+    {
+        return -1;
+    }
 
     FILE* file = static_cast<FILE*>(handle);
     long current_pos = ftell(file);
@@ -166,7 +181,10 @@ long DesktopFileSystem::GetFileSize(FileHandle handle)
 
 bool DesktopFileSystem::FileExists(const char* path)
 {
-    if (!m_Initialized || !path) return false;
+    if (!m_Initialized || !path)
+    {
+        return false;
+    }
 
     std::string real_path = ConvertPathInternal(path);
     FILE* file = fopen(real_path.c_str(), "rb");
@@ -182,10 +200,16 @@ bool DesktopFileSystem::FileExists(const char* path)
 
 bool DesktopFileSystem::ConvertPath(const char* virtualPath, char* outBuffer, size_t bufferSize)
 {
-    if (!virtualPath || !outBuffer || bufferSize == 0) return false;
+    if (!virtualPath || !outBuffer || bufferSize == 0)
+    {
+        return false;
+    }
 
     std::string converted = ConvertPathInternal(virtualPath);
-    if (converted.length() >= bufferSize) return false;
+    if (converted.length() >= bufferSize)
+    {
+        return false;
+    }
 
     strcpy(outBuffer, converted.c_str());
     return true;

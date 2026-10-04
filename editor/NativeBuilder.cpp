@@ -61,9 +61,9 @@ struct NativePrebuilt
 // the package's to choose; the builder only follows it.
 struct NativeDependency
 {
-    std::string name;     // e.g. "SDL3"
-    std::string version;  // e.g. "3.2.8"
-    std::string git;      // source fallback: repository, built at tag release-<version>
+    std::string name;                                // e.g. "SDL3"
+    std::string version;                             // e.g. "3.2.8"
+    std::string git;                                 // source fallback: repository, built at tag release-<version>
     std::map<std::string, NativePrebuilt> prebuilt;  // host key ("windows-mingw", "linux", "macos") -> archive
 };
 
@@ -72,11 +72,15 @@ struct NativeDependency
 bool ParseNativeDependency(const CMakeGen::FrameworkDependency& declared, NativeDependency& out)
 {
     if (declared.json.empty())
+    {
         return false;
+    }
 
     const nlohmann::json dep = nlohmann::json::parse(declared.json, nullptr, /*allow_exceptions*/ false);
     if (!dep.is_object())
+    {
         return false;
+    }
 
     out.name = declared.name;
     out.version = dep.value("version", "");
@@ -85,7 +89,10 @@ bool ParseNativeDependency(const CMakeGen::FrameworkDependency& declared, Native
     {
         for (auto& [host, archive] : dep["prebuilt"].items())
         {
-            if (!archive.is_object()) continue;
+            if (!archive.is_object())
+            {
+                continue;
+            }
             NativePrebuilt pre;
             pre.url = archive.value("url", "");
             pre.sha256 = archive.value("sha256", "");
@@ -98,7 +105,6 @@ bool ParseNativeDependency(const CMakeGen::FrameworkDependency& declared, Native
 }
 }  // namespace
 
-
 NativeBuilder::NativeBuilder()
 {
 }
@@ -107,7 +113,9 @@ NativeBuilder::~NativeBuilder()
 {
     Cancel();
     if (m_BuildThread.joinable())
+    {
         m_BuildThread.join();
+    }
 }
 
 // ============================================================================
@@ -160,14 +168,12 @@ void NativeBuilder::Deploy(const std::string& projectPath, const std::string& /*
     // single-config, so build/bin is where the executable lands. The
     // per-config directories below are for a multi-config generator.
     std::string exePath;
-    std::vector<std::string> candidates = {
-        buildDir + "/build/bin/" + kNativeExecutableName,
-        buildDir + "/build/bin/Release/" + kNativeExecutableName,
-        buildDir + "/build/bin/Debug/" + kNativeExecutableName,
-        buildDir + "/build/" + kNativeExecutableName,
-        buildDir + "/build/Release/" + kNativeExecutableName,
-        buildDir + "/build/Debug/" + kNativeExecutableName
-    };
+    std::vector<std::string> candidates = { buildDir + "/build/bin/" + kNativeExecutableName,
+                                            buildDir + "/build/bin/Release/" + kNativeExecutableName,
+                                            buildDir + "/build/bin/Debug/" + kNativeExecutableName,
+                                            buildDir + "/build/" + kNativeExecutableName,
+                                            buildDir + "/build/Release/" + kNativeExecutableName,
+                                            buildDir + "/build/Debug/" + kNativeExecutableName };
 
     for (const auto& path : candidates)
     {
@@ -180,22 +186,34 @@ void NativeBuilder::Deploy(const std::string& projectPath, const std::string& /*
 
     if (exePath.empty())
     {
-        if (outputCallback) outputCallback("Executable not found. Build the project first.", true);
+        if (outputCallback)
+        {
+            outputCallback("Executable not found. Build the project first.", true);
+        }
         return;
     }
 
-    if (outputCallback) outputCallback("Launching: " + exePath, false);
+    if (outputCallback)
+    {
+        outputCallback("Launching: " + exePath, false);
+    }
 
     // From its own directory: the deployed storage partitions sit beside
     // it and it resolves them relative to the working directory.
     const std::string workDir = fs::path(exePath).parent_path().string();
     if (LaunchDetachedInDirectory(exePath, {}, workDir))
     {
-        if (outputCallback) outputCallback("Application launched.", false);
+        if (outputCallback)
+        {
+            outputCallback("Application launched.", false);
+        }
     }
     else
     {
-        if (outputCallback) outputCallback("Failed to launch application.", true);
+        if (outputCallback)
+        {
+            outputCallback("Failed to launch application.", true);
+        }
     }
 }
 
@@ -214,12 +232,18 @@ void NativeBuilder::DoBuild(const std::string& projectPath, BuildOutputCallback 
                             BuildProgressCallback progressCallback)
 {
     SetProgress(BuildState::Building, "Starting native build...", 0.0f);
-    if (progressCallback) progressCallback(GetProgress());
+    if (progressCallback)
+    {
+        progressCallback(GetProgress());
+    }
 
     if (!IsToolchainInstalled())
     {
         SetError("CMake is not installed. Please install CMake and ensure it is on your PATH.");
-        if (progressCallback) progressCallback(GetProgress());
+        if (progressCallback)
+        {
+            progressCallback(GetProgress());
+        }
         return;
     }
 
@@ -239,35 +263,53 @@ void NativeBuilder::DoBuild(const std::string& projectPath, BuildOutputCallback 
     // skips the reconfigure/recompile. Guarding on "CMakeLists.txt exists" instead left a stale
     // deki_package_init.gen.cpp behind that kept calling SDL3_RegisterComponents() after the
     // package's prefix became DekiSDL3, breaking the link.
-    if (outputCallback) outputCallback("Generating build files...", false);
+    if (outputCallback)
+    {
+        outputCallback("Generating build files...", false);
+    }
     // Third-party libraries the packages declared (SDL3): fetch a prebuilt
     // archive where one is published for this host, else note the version
     // for a source build. Runs before the build files so they can name it.
     SetProgress(BuildState::Building, "Resolving native dependencies...", 0.05f);
-    if (progressCallback) progressCallback(GetProgress());
+    if (progressCallback)
+    {
+        progressCallback(GetProgress());
+    }
     if (!PrepareNativeDependencies(projectPath, outputCallback))
     {
         SetError("Failed to resolve native dependencies");
-        if (progressCallback) progressCallback(GetProgress());
+        if (progressCallback)
+        {
+            progressCallback(GetProgress());
+        }
         return;
     }
 
     if (!GenerateBuildFiles(projectPath, m_PlatformConfig, m_PackageDefines))
     {
         SetError("Failed to generate build files");
-        if (progressCallback) progressCallback(GetProgress());
+        if (progressCallback)
+        {
+            progressCallback(GetProgress());
+        }
         return;
     }
 
     // Configure
     SetProgress(BuildState::Building, "Configuring...", 0.1f);
-    if (progressCallback) progressCallback(GetProgress());
+    if (progressCallback)
+    {
+        progressCallback(GetProgress());
+    }
 
     std::string configureCmd = "cmake" + EditorSettings::GetCMakeLocationArgs() + " -B build -S .";
     if (m_CancelRequested)
     {
         SetError("Build cancelled");
-        if (progressCallback) progressCallback(GetProgress());
+        if (progressCallback)
+        {
+            progressCallback(GetProgress());
+        }
         return;
     }
 
@@ -275,19 +317,28 @@ void NativeBuilder::DoBuild(const std::string& projectPath, BuildOutputCallback 
     if (configResult != 0)
     {
         SetError("CMake configure failed with exit code " + std::to_string(configResult));
-        if (progressCallback) progressCallback(GetProgress());
+        if (progressCallback)
+        {
+            progressCallback(GetProgress());
+        }
         return;
     }
 
     // Build
     SetProgress(BuildState::Building, "Building...", 0.3f);
-    if (progressCallback) progressCallback(GetProgress());
+    if (progressCallback)
+    {
+        progressCallback(GetProgress());
+    }
 
     std::string buildCmd = "cmake --build build --config Release";
     if (m_CancelRequested)
     {
         SetError("Build cancelled");
-        if (progressCallback) progressCallback(GetProgress());
+        if (progressCallback)
+        {
+            progressCallback(GetProgress());
+        }
         return;
     }
 
@@ -295,26 +346,38 @@ void NativeBuilder::DoBuild(const std::string& projectPath, BuildOutputCallback 
     if (buildResult != 0)
     {
         SetError("Build failed with exit code " + std::to_string(buildResult));
-        if (progressCallback) progressCallback(GetProgress());
+        if (progressCallback)
+        {
+            progressCallback(GetProgress());
+        }
         return;
     }
 
     if (!DeployPartitions(projectPath, buildDir, outputCallback))
     {
         SetError("Build succeeded but a storage partition could not be deployed next to the exe");
-        if (progressCallback) progressCallback(GetProgress());
+        if (progressCallback)
+        {
+            progressCallback(GetProgress());
+        }
         return;
     }
 
     SetProgress(BuildState::Completed, "Build succeeded", 1.0f);
-    if (progressCallback) progressCallback(GetProgress());
+    if (progressCallback)
+    {
+        progressCallback(GetProgress());
+    }
 }
 
 void NativeBuilder::DoClean(const std::string& projectPath, BuildOutputCallback outputCallback,
                             BuildProgressCallback progressCallback)
 {
     SetProgress(BuildState::Building, "Cleaning...", 0.0f);
-    if (progressCallback) progressCallback(GetProgress());
+    if (progressCallback)
+    {
+        progressCallback(GetProgress());
+    }
 
     std::string buildDir = GetBuildDirectory(projectPath);
     fs::path buildPath = fs::path(buildDir) / "build";
@@ -324,30 +387,41 @@ void NativeBuilder::DoClean(const std::string& projectPath, BuildOutputCallback 
         if (fs::exists(buildPath))
         {
             fs::remove_all(buildPath);
-            if (outputCallback) outputCallback("Removed: " + buildPath.string(), false);
+            if (outputCallback)
+            {
+                outputCallback("Removed: " + buildPath.string(), false);
+            }
         }
         else
         {
-            if (outputCallback) outputCallback("Build directory does not exist, nothing to clean.", false);
+            if (outputCallback)
+            {
+                outputCallback("Build directory does not exist, nothing to clean.", false);
+            }
         }
     }
     catch (const std::exception& e)
     {
         SetError(std::string("Clean failed: ") + e.what());
-        if (progressCallback) progressCallback(GetProgress());
+        if (progressCallback)
+        {
+            progressCallback(GetProgress());
+        }
         return;
     }
 
     SetProgress(BuildState::Completed, "Clean succeeded", 1.0f);
-    if (progressCallback) progressCallback(GetProgress());
+    if (progressCallback)
+    {
+        progressCallback(GetProgress());
+    }
 }
 
 // ============================================================================
 // Build file generation
 // ============================================================================
 
-bool NativeBuilder::GenerateBuildFiles(const std::string& projectPath,
-                                       const PlatformConfig& config,
+bool NativeBuilder::GenerateBuildFiles(const std::string& projectPath, const PlatformConfig& config,
                                        const std::vector<std::string>& packageDefines)
 {
     fs::path buildDir = fs::path(GetBuildDirectory(projectPath));
@@ -362,7 +436,9 @@ bool NativeBuilder::GenerateBuildFiles(const std::string& projectPath,
     }
 
     if (!GenerateCMakeLists(projectPath, buildDir.string(), config, packageDefines))
+    {
         return false;
+    }
 
     return true;
 }
@@ -380,17 +456,30 @@ static std::string SdlSourceVersion(const fs::path& srcDir)
 {
     std::ifstream in(srcDir / "include" / "SDL3" / "SDL_version.h");
     if (!in)
+    {
         return "";
+    }
     int major = -1, minor = -1, micro = -1, v = 0;
     std::string line;
     while (std::getline(in, line))
     {
-        if (std::sscanf(line.c_str(), "#define SDL_MAJOR_VERSION %d", &v) == 1) major = v;
-        else if (std::sscanf(line.c_str(), "#define SDL_MINOR_VERSION %d", &v) == 1) minor = v;
-        else if (std::sscanf(line.c_str(), "#define SDL_MICRO_VERSION %d", &v) == 1) micro = v;
+        if (std::sscanf(line.c_str(), "#define SDL_MAJOR_VERSION %d", &v) == 1)
+        {
+            major = v;
+        }
+        else if (std::sscanf(line.c_str(), "#define SDL_MINOR_VERSION %d", &v) == 1)
+        {
+            minor = v;
+        }
+        else if (std::sscanf(line.c_str(), "#define SDL_MICRO_VERSION %d", &v) == 1)
+        {
+            micro = v;
+        }
     }
     if (major < 0 || minor < 0 || micro < 0)
+    {
         return "";
+    }
     return std::to_string(major) + "." + std::to_string(minor) + "." + std::to_string(micro);
 }
 
@@ -416,28 +505,43 @@ bool NativeBuilder::PrepareNativeDependencies(const std::string& projectPath, Bu
     m_NativeDeps.clear();
     auto log = [&](const std::string& message, bool isError = false)
     {
-        if (outputCallback) outputCallback(message, isError);
+        if (outputCallback)
+        {
+            outputCallback(message, isError);
+        }
     };
 
     const auto allPackages = CMakeGen::ScanPackageManifests(projectPath);
-    const auto activeIds = CMakeGen::ResolveActivePackages(allPackages, m_PackageDefines, m_PlatformConfig.Capabilities());
+    const auto activeIds =
+        CMakeGen::ResolveActivePackages(allPackages, m_PackageDefines, m_PlatformConfig.Capabilities());
     const std::string host = HostPrebuiltKey();
     const fs::path depsRoot = ProjectPaths::Generated(projectPath) / "deps";
 
     for (const auto& pkg : allPackages)
     {
-        if (activeIds.count(pkg.id) == 0) continue;
+        if (activeIds.count(pkg.id) == 0)
+        {
+            continue;
+        }
         const auto mine = pkg.frameworkDeps.find(GetFrameworkId());
-        if (mine == pkg.frameworkDeps.end()) continue;
+        if (mine == pkg.frameworkDeps.end())
+        {
+            continue;
+        }
         for (const auto& declared : mine->second)
         {
             NativeDependency dep;
-            if (!ParseNativeDependency(declared, dep)) continue;
+            if (!ParseNativeDependency(declared, dep))
+            {
+                continue;
+            }
 
             std::string reason;
             if (!SafeNames::IsSafeName(dep.name, reason) || !SafeNames::IsSafeName(dep.version, reason))
             {
-                log(pkg.id + ": native dependency '" + dep.name + "' " + dep.version + " has an unusable name: " + reason, true);
+                log(pkg.id + ": native dependency '" + dep.name + "' " + dep.version +
+                        " has an unusable name: " + reason,
+                    true);
                 continue;
             }
 
@@ -461,17 +565,24 @@ bool NativeBuilder::PrepareNativeDependencies(const std::string& projectPath, Bu
                 }
 
                 if (!ready && pre.sha256.empty())
+                {
                     log(pkg.id + ": prebuilt " + dep.name + " has no sha256; building it from source instead", true);
+                }
                 else if (!ready && (!EditorHttpUtils::IsSafeArchiveEntry(pre.cmakeDir) ||
                                     !EditorHttpUtils::IsSafeArchiveEntry(pre.includeDir)))
-                    log(pkg.id + ": prebuilt " + dep.name + " names a directory outside its archive; building it from source instead", true);
+                {
+                    log(pkg.id + ": prebuilt " + dep.name +
+                            " names a directory outside its archive; building it from source instead",
+                        true);
+                }
                 else if (!ready)
                 {
                     log("Fetching prebuilt " + dep.name + " " + dep.version + " from " + pre.url);
                     fs::create_directories(depsRoot, ec);
                     const fs::path zip = depsRoot / (dep.name + "-" + dep.version + ".zip");
                     auto status = [&](const std::string& s) { log(s); };
-                    bool ok = EditorHttpUtils::DownloadFileVerified(pre.url, zip.string(), pre.sha256, &m_CancelRequested, status);
+                    bool ok = EditorHttpUtils::DownloadFileVerified(pre.url, zip.string(), pre.sha256,
+                                                                    &m_CancelRequested, status);
                     if (ok)
                     {
                         fs::remove_all(dest, ec);
@@ -503,37 +614,40 @@ bool NativeBuilder::PrepareNativeDependencies(const std::string& projectPath, Bu
                     }
                     else
                     {
-                        log("Prebuilt " + dep.name + " archive has no " + dep.name + "Config.cmake under " + pre.cmakeDir +
-                                "; building it from source instead",
+                        log("Prebuilt " + dep.name + " archive has no " + dep.name + "Config.cmake under " +
+                                pre.cmakeDir + "; building it from source instead",
                             true);
                     }
                 }
             }
 
             if (resolved.cmakeDir.empty())
+            {
                 log("Building " + dep.name + " " + dep.version + " from source");
+            }
             m_NativeDeps[dep.name] = resolved;
         }
     }
     return true;
 }
 
-bool NativeBuilder::GenerateCMakeLists(const std::string& projectPath,
-                                       const std::string& buildDir,
-                                       const PlatformConfig& config,
-                                       const std::vector<std::string>& packageDefines)
+bool NativeBuilder::GenerateCMakeLists(const std::string& projectPath, const std::string& buildDir,
+                                       const PlatformConfig& config, const std::vector<std::string>& packageDefines)
 {
     std::string enginePath = ToCMakePath(EditorSettings::GetEnginePath());
     if (enginePath.empty())
+    {
         return false;
+    }
 
     // The transform width this project compiles: the widest any active package
     // or the project itself declares (CMakeGenUtils, COMPATIBILITY.md).
     const auto allPackages = CMakeGen::ScanPackageManifests(projectPath);
-    const auto activeIds = CMakeGen::ResolveActivePackages(allPackages, packageDefines, m_PlatformConfig.Capabilities());
+    const auto activeIds =
+        CMakeGen::ResolveActivePackages(allPackages, packageDefines, m_PlatformConfig.Capabilities());
     std::string transformWhy;
-    const CMakeGen::TransformWidth transformWidth = CMakeGen::ResolveProjectTransformWidth(
-        allPackages, CMakeGen::ReadProjectTags(projectPath), &transformWhy);
+    const CMakeGen::TransformWidth transformWidth =
+        CMakeGen::ResolveProjectTransformWidth(allPackages, CMakeGen::ReadProjectTags(projectPath), &transformWhy);
     const std::vector<std::string> transformDefines = CMakeGen::TransformDefines(transformWidth);
 
     // What this build leaves out (services/FeatureResolver): the stripped
@@ -541,10 +655,14 @@ bool NativeBuilder::GenerateCMakeLists(const std::string& projectPath,
     // of the reflection codegen, so nothing references what is not compiled.
     const StripPlan strip = ComputeStripPlan(projectPath, m_PlatformConfig.id);
     for (const auto& w : strip.warnings)
+    {
         DEKI_LOG_WARNING("%s", w.c_str());
+    }
     std::string stripSourceRegex;
     for (const auto& rx : strip.SourceExcludeRegexes())
+    {
         stripSourceRegex += (stripSourceRegex.empty() ? "" : "|") + rx;
+    }
 
     std::ostringstream file;
 
@@ -599,11 +717,17 @@ bool NativeBuilder::GenerateCMakeLists(const std::string& projectPath,
     // the same version, so nothing is cloned.
     ResolvedNativeDependency sdl3;
     if (auto it = m_NativeDeps.find("SDL3"); it != m_NativeDeps.end())
+    {
         sdl3 = it->second;
+    }
     if (sdl3.version.empty())
+    {
         sdl3.version = "3.2.8";
+    }
     if (sdl3.git.empty())
+    {
         sdl3.git = "https://github.com/libsdl-org/SDL.git";
+    }
 
     file << "# SDL3 " << sdl3.version << "\n";
     if (!sdl3.cmakeDir.empty())
@@ -620,8 +744,10 @@ bool NativeBuilder::GenerateCMakeLists(const std::string& projectPath,
         const fs::path editorSdl3 = fs::path(EditorSettings::GetDepsDir()) / "sdl3-src";
         if (SdlSourceVersion(editorSdl3) == sdl3.version)
         {
-            file << "if(NOT DEFINED FETCHCONTENT_SOURCE_DIR_SDL3 AND EXISTS \"" << ToCMakePath(editorSdl3.string()) << "/CMakeLists.txt\")\n";
-            file << "    set(FETCHCONTENT_SOURCE_DIR_SDL3 \"" << ToCMakePath(editorSdl3.string()) << "\" CACHE PATH \"SDL3 source shared with the editor build\")\n";
+            file << "if(NOT DEFINED FETCHCONTENT_SOURCE_DIR_SDL3 AND EXISTS \"" << ToCMakePath(editorSdl3.string())
+                 << "/CMakeLists.txt\")\n";
+            file << "    set(FETCHCONTENT_SOURCE_DIR_SDL3 \"" << ToCMakePath(editorSdl3.string())
+                 << "\" CACHE PATH \"SDL3 source shared with the editor build\")\n";
             file << "endif()\n";
         }
         file << "set(SDL_SHARED OFF CACHE BOOL \"\" FORCE)\n";
@@ -692,13 +818,14 @@ bool NativeBuilder::GenerateCMakeLists(const std::string& projectPath,
     // platform setup) follows the platform's defines, so a project can switch
     // it on for a simulator run without editing the engine.
     if (std::find(config.defines.begin(), config.defines.end(), "DEKI_LOG_INTERNAL_ENABLED") != config.defines.end())
+    {
         file << "target_compile_definitions(deki-engine-core PUBLIC DEKI_LOG_INTERNAL_ENABLED)\n";
+    }
     file << "\n";
 
     // Project sources. PluginExports.cpp is editor/DLL export glue (uses editor-only
     // GetComponentMeta) — the static exe registers components via the init file below.
-    CMakeGen::EmitProjectSourceCollection(file,
-                                          "${DEKI_PROJECT_ROOT}/src");
+    CMakeGen::EmitProjectSourceCollection(file, "${DEKI_PROJECT_ROOT}/src");
     file << "list(FILTER PROJECT_SOURCES EXCLUDE REGEX \"PluginExports\\\\.cpp$\")\n";
     file << "\n";
 
@@ -759,7 +886,8 @@ bool NativeBuilder::GenerateCMakeLists(const std::string& projectPath,
     file << "        if(_DEKI_STRIP_SRC_REGEX AND \"${SRC}\" MATCHES \"${_DEKI_STRIP_SRC_REGEX}\")\n";
     file << "            set(_IS_STRIPPED TRUE)\n";
     file << "        endif()\n";
-    file << "        if(_IS_EDITOR EQUAL -1 AND _IS_TESTS EQUAL -1 AND _IS_GEN EQUAL -1 AND NOT _IS_STRIPPED AND NOT \"${SRC}\" STREQUAL \"${_ENTRY_PATH}\")\n";
+    file << "        if(_IS_EDITOR EQUAL -1 AND _IS_TESTS EQUAL -1 AND _IS_GEN EQUAL -1 AND NOT _IS_STRIPPED AND NOT "
+            "\"${SRC}\" STREQUAL \"${_ENTRY_PATH}\")\n";
     file << "            list(APPEND _ALL_PACKAGE_SOURCES \"${SRC}\")\n";
     file << "        endif()\n";
     file << "    endforeach()\n";
@@ -797,7 +925,8 @@ bool NativeBuilder::GenerateCMakeLists(const std::string& projectPath,
     file << "        find_program(DEKI_GXX16 NAMES g++-16 g++)\n";
     file << "    endif()\n";
     file << "    if(NOT DEKI_GXX16)\n";
-    file << "        message(FATAL_ERROR \"Deki reflection codegen needs GCC 16.1+; pass -DDEKI_GXX16=<path to g++>\")\n";
+    file << "        message(FATAL_ERROR \"Deki reflection codegen needs GCC 16.1+; pass -DDEKI_GXX16=<path to "
+            "g++>\")\n";
     file << "    endif()\n";
     file << "endif()\n\n";
 
@@ -834,18 +963,26 @@ bool NativeBuilder::GenerateCMakeLists(const std::string& projectPath,
         {
             file << "        EXCLUDE_REGEX";
             for (const auto& rx : codegenExcludes)
+            {
                 file << " \"" << CMakeGen::EscapeCMakeString(rx) << "\"";
+            }
             file << "\n";
         }
     }
     file << "        DEFINES SIMULATOR DEKI_LOG_ENABLED";
     for (const auto& define : transformDefines)
+    {
         file << " " << define;
+    }
     file << " \"DEKI_FAST_ATTR=\"\n";
     for (const auto& define : config.defines)
+    {
         file << "                " << define << "\n";
+    }
     for (const auto& define : packageDefines)
+    {
         file << "                " << define << "\n";
+    }
     file << "                \"DEKI_SCREEN_WIDTH=" << config.screenWidth << "\"\n";
     file << "                \"DEKI_SCREEN_HEIGHT=" << config.screenHeight << "\")\n";
     // Compile the .gen.cpp this pass produces, not the package's checked-in copy.
@@ -865,9 +1002,9 @@ bool NativeBuilder::GenerateCMakeLists(const std::string& projectPath,
     // empty deki_init_package_systems() stub, so the init file inlines the package
     // *_InitSystem() calls into deki_register_project_packages() instead of redefining
     // that symbol (which would collide at link time).
-    std::string packageInitName = fs::path(CMakeGen::GeneratePackageInitFile(
-                                               buildDir, allPackages, activeIds, fs::path(GetSourceDirectory(projRoot)),
-                                               /*engineDefinesSystemInit=*/true))
+    std::string packageInitName = fs::path(CMakeGen::GeneratePackageInitFile(buildDir, allPackages, activeIds,
+                                                                             fs::path(GetSourceDirectory(projRoot)),
+                                                                             /*engineDefinesSystemInit=*/true))
                                       .filename()
                                       .string();
 
@@ -908,12 +1045,14 @@ bool NativeBuilder::GenerateCMakeLists(const std::string& projectPath,
     file << ")\n\n";
 
     // Link (deki-engine-core + SDL3/OpenGL + package-declared system libs e.g. winhttp)
-    file << "target_link_libraries(DekiGame PRIVATE deki-engine-core ${DEKI_SDL3_TARGET} OpenGL::GL ${_ALL_SYSTEM_LIBS})\n\n";
+    file << "target_link_libraries(DekiGame PRIVATE deki-engine-core ${DEKI_SDL3_TARGET} OpenGL::GL "
+            "${_ALL_SYSTEM_LIBS})\n\n";
 
     // A prebuilt SDL3 is a DLL; it has to sit next to the exe.
     file << "if(TARGET SDL3::SDL3-shared)\n";
     file << "    add_custom_command(TARGET DekiGame POST_BUILD\n";
-    file << "        COMMAND ${CMAKE_COMMAND} -E copy_if_different \"$<TARGET_FILE:SDL3::SDL3-shared>\" \"$<TARGET_FILE_DIR:DekiGame>\"\n";
+    file << "        COMMAND ${CMAKE_COMMAND} -E copy_if_different \"$<TARGET_FILE:SDL3::SDL3-shared>\" "
+            "\"$<TARGET_FILE_DIR:DekiGame>\"\n";
     file << "        COMMENT \"Copying SDL3 next to DekiGame\")\n";
     file << "endif()\n\n";
 
@@ -922,7 +1061,9 @@ bool NativeBuilder::GenerateCMakeLists(const std::string& projectPath,
     file << "target_compile_definitions(DekiGame PRIVATE\n";
     file << "    SIMULATOR\n";
     for (const auto& define : transformDefines)
+    {
         file << "    " << define << "\n";
+    }
     file << "    ${PACKAGE_DEFINES}\n";
     for (const auto& define : config.defines)
     {
@@ -948,7 +1089,9 @@ bool NativeBuilder::GenerateCMakeLists(const std::string& projectPath,
         file << "target_compile_options(DekiGame PRIVATE\n";
         file << "    $<$<COMPILE_LANGUAGE:C>:";
         for (const auto& flag : config.cFlags)
+        {
             file << " " << flag;
+        }
         file << ">\n";
         file << ")\n\n";
     }
@@ -965,19 +1108,24 @@ bool NativeBuilder::GenerateCMakeLists(const std::string& projectPath,
     for (const auto& flag : config.cxxFlags)
     {
         if (flag.rfind("-std=", 0) == 0)
+        {
             droppedStd.push_back(flag);
+        }
         else
+        {
             cxxFlags.push_back(flag);
+        }
     }
     if (!droppedStd.empty())
     {
         std::string names;
         for (const auto& f : droppedStd)
+        {
             names += (names.empty() ? "" : ", ") + f;
-        DEKI_LOG_WARNING(
-            "NativeBuilder: ignoring %s from platform '%s' cxxFlags. The C++ standard is set by "
-            "the build (C++23), and a flag here would override it and break the engine headers.",
-            names.c_str(), config.id.c_str());
+        }
+        DEKI_LOG_WARNING("NativeBuilder: ignoring %s from platform '%s' cxxFlags. The C++ standard is set by "
+                         "the build (C++23), and a flag here would override it and break the engine headers.",
+                         names.c_str(), config.id.c_str());
     }
 
     if (!cxxFlags.empty())
@@ -985,7 +1133,9 @@ bool NativeBuilder::GenerateCMakeLists(const std::string& projectPath,
         file << "target_compile_options(DekiGame PRIVATE\n";
         file << "    $<$<COMPILE_LANGUAGE:CXX>:";
         for (const auto& flag : cxxFlags)
+        {
             file << " " << flag;
+        }
         file << ">\n";
         file << ")\n\n";
     }
@@ -994,7 +1144,9 @@ bool NativeBuilder::GenerateCMakeLists(const std::string& projectPath,
     {
         file << "target_link_options(DekiGame PRIVATE";
         for (const auto& flag : config.linkFlags)
+        {
             file << " " << flag;
+        }
         file << ")\n\n";
     }
 
@@ -1033,9 +1185,10 @@ bool NativeBuilder::DeployPartitions(const std::string& projectPath, const std::
         if (!fs::is_directory(source, ec))
         {
             if (outputCallback)
-                outputCallback(std::string("No ") + name + " partition to deploy (" + source.string() +
-                                   " does not exist)",
-                               false);
+            {
+                outputCallback(
+                    std::string("No ") + name + " partition to deploy (" + source.string() + " does not exist)", false);
+            }
             continue;
         }
         const fs::path dest = binDir / name;
@@ -1044,12 +1197,16 @@ bool NativeBuilder::DeployPartitions(const std::string& projectPath, const std::
         if (ec)
         {
             if (outputCallback)
+            {
                 outputCallback(std::string("Failed to deploy ") + name + " partition: " + ec.message(), true);
+            }
             ok = false;
             continue;
         }
         if (outputCallback)
+        {
             outputCallback(std::string("Deployed ") + name + " partition next to DekiGame", false);
+        }
     }
     return ok;
 }
@@ -1088,8 +1245,14 @@ public:
             ImGui::SameLine(0.0f, gap);
             ImGui::SetNextItemWidth(fieldW);
             DekiEditor::SchematicDragInt("##ScreenHeight", &m_ScreenHeight, 1.0f, 1, 16384);
-            if (m_ScreenWidth < 1) m_ScreenWidth = 1;
-            if (m_ScreenHeight < 1) m_ScreenHeight = 1;
+            if (m_ScreenWidth < 1)
+            {
+                m_ScreenWidth = 1;
+            }
+            if (m_ScreenHeight < 1)
+            {
+                m_ScreenHeight = 1;
+            }
             DekiEditor::EndPropertyContext();
             DekiEditor::SchematicSectionEnd();
         }
@@ -1152,28 +1315,36 @@ std::unique_ptr<IPlatformEditorUI> NativeBuilder::CreateEditorUI(const PlatformC
 
 #include <deki-editor/build/BuilderPlugin.h>
 
-extern "C" {
-
-DEKI_BUILDER_API const DekiBuilderAbi* DekiBuilder_GetAbi(void)
+extern "C"
 {
-    static const DekiBuilderAbi abi =
-        DekiBuilder_ThisAbi((uint32_t)sizeof(DekiEditor::PlatformConfig),
-                            (uint32_t)sizeof(DekiEditor::CMakeGen::PackageEntry));
-    return &abi;
-}
+    DEKI_BUILDER_API const DekiBuilderAbi* DekiBuilder_GetAbi(void)
+    {
+        static const DekiBuilderAbi abi = DekiBuilder_ThisAbi((uint32_t)sizeof(DekiEditor::PlatformConfig),
+                                                              (uint32_t)sizeof(DekiEditor::CMakeGen::PackageEntry));
+        return &abi;
+    }
 
-DEKI_BUILDER_API const char* DekiBuilder_GetName(void) { return "Native Builder"; }
-DEKI_BUILDER_API const char* DekiBuilder_GetVersion(void) { return "1.0.0"; }
-DEKI_BUILDER_API int DekiBuilder_GetBuilderCount(void) { return 1; }
+    DEKI_BUILDER_API const char* DekiBuilder_GetName(void)
+    {
+        return "Native Builder";
+    }
+    DEKI_BUILDER_API const char* DekiBuilder_GetVersion(void)
+    {
+        return "1.0.0";
+    }
+    DEKI_BUILDER_API int DekiBuilder_GetBuilderCount(void)
+    {
+        return 1;
+    }
 
-DEKI_BUILDER_API DekiEditor::ITargetBuilder* DekiBuilder_CreateBuilder(int index)
-{
-    return index == 0 ? new DekiEditor::NativeBuilder() : nullptr;
-}
+    DEKI_BUILDER_API DekiEditor::ITargetBuilder* DekiBuilder_CreateBuilder(int index)
+    {
+        return index == 0 ? new DekiEditor::NativeBuilder() : nullptr;
+    }
 
-DEKI_BUILDER_API void DekiBuilder_DestroyBuilder(DekiEditor::ITargetBuilder* builder)
-{
-    delete builder;  // in THIS module: its vtable and operator delete live here
-}
+    DEKI_BUILDER_API void DekiBuilder_DestroyBuilder(DekiEditor::ITargetBuilder* builder)
+    {
+        delete builder;  // in THIS module: its vtable and operator delete live here
+    }
 
 }  // extern "C"

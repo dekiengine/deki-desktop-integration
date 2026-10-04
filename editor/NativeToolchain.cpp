@@ -32,7 +32,9 @@ std::string NativeToolchain::RunCommandSilent(const std::string& command)
 
     HANDLE hReadPipe, hWritePipe;
     if (!CreatePipe(&hReadPipe, &hWritePipe, &sa, 0))
+    {
         return "";
+    }
 
     SetHandleInformation(hReadPipe, HANDLE_FLAG_INHERIT, 0);
 
@@ -50,9 +52,7 @@ std::string NativeToolchain::RunCommandSilent(const std::string& command)
     std::vector<char> cmdBuf(cmdLine.begin(), cmdLine.end());
     cmdBuf.push_back('\0');
 
-    BOOL success = CreateProcessA(
-        NULL, cmdBuf.data(), NULL, NULL, TRUE,
-        CREATE_NO_WINDOW, NULL, NULL, &si, &pi);
+    BOOL success = CreateProcessA(NULL, cmdBuf.data(), NULL, NULL, TRUE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi);
 
     CloseHandle(hWritePipe);
 
@@ -74,9 +74,13 @@ std::string NativeToolchain::RunCommandSilent(const std::string& command)
 
     size_t endPos = result.find_last_not_of(" \t\r\n");
     if (endPos != std::string::npos)
+    {
         result.erase(endPos + 1);
+    }
     else
+    {
         result.clear();
+    }
 
     return result;
 }
@@ -94,7 +98,9 @@ std::string NativeToolchain::RunCommandSilent(const std::string& /*command*/)
 void NativeToolchain::ScanSystemCompilers() const
 {
     if (m_HasScanned)
+    {
         return;
+    }
     m_HasScanned = true;
     m_Compilers.clear();
     m_CMakePath = FindCMake();
@@ -126,7 +132,9 @@ void NativeToolchain::ScanSystemCompilers() const
 
                                 fs::path linkPath = versionDir.path() / "bin" / "Hostx64" / "x64" / "link.exe";
                                 if (fs::exists(linkPath))
+                                {
                                     info.linkerPath = linkPath.string();
+                                }
                                 break;
                             }
                         }
@@ -139,15 +147,14 @@ void NativeToolchain::ScanSystemCompilers() const
 
             info.isValid = !info.compilerPath.empty() && fs::exists(info.compilerPath);
             if (info.isValid)
+            {
                 m_Compilers.push_back(info);
+            }
         }
 
         // Look for MinGW/MSYS2
-        std::vector<std::string> mingwPaths = {
-            "C:/msys64/mingw64/bin/g++.exe",
-            "C:/mingw64/bin/g++.exe",
-            "C:/MinGW/bin/g++.exe"
-        };
+        std::vector<std::string> mingwPaths = { "C:/msys64/mingw64/bin/g++.exe", "C:/mingw64/bin/g++.exe",
+                                                "C:/MinGW/bin/g++.exe" };
 
         for (const auto& gppPath : mingwPaths)
         {
@@ -163,12 +170,10 @@ void NativeToolchain::ScanSystemCompilers() const
         }
 #else
         // Linux/macOS - look for g++ or clang++
-        std::vector<std::pair<std::string, std::string>> compilers = {
-            { "/usr/bin/g++", "GCC" },
-            { "/usr/bin/clang++", "Clang" },
-            { "/usr/local/bin/g++", "GCC (local)" },
-            { "/usr/local/bin/clang++", "Clang (local)" }
-        };
+        std::vector<std::pair<std::string, std::string>> compilers = { { "/usr/bin/g++", "GCC" },
+                                                                       { "/usr/bin/clang++", "Clang" },
+                                                                       { "/usr/local/bin/g++", "GCC (local)" },
+                                                                       { "/usr/local/bin/clang++", "Clang (local)" } };
 
         for (const auto& [path, name] : compilers)
         {
@@ -206,18 +211,18 @@ std::string NativeToolchain::FindVSInstallation() const
     }
 
     // Fallback: check common paths
-    std::vector<std::string> vsPaths = {
-        "C:/Program Files/Microsoft Visual Studio/2022/Community",
-        "C:/Program Files/Microsoft Visual Studio/2022/Professional",
-        "C:/Program Files/Microsoft Visual Studio/2022/Enterprise",
-        "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community",
-        "C:/Program Files (x86)/Microsoft Visual Studio/2019/Professional"
-    };
+    std::vector<std::string> vsPaths = { "C:/Program Files/Microsoft Visual Studio/2022/Community",
+                                         "C:/Program Files/Microsoft Visual Studio/2022/Professional",
+                                         "C:/Program Files/Microsoft Visual Studio/2022/Enterprise",
+                                         "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community",
+                                         "C:/Program Files (x86)/Microsoft Visual Studio/2019/Professional" };
 
     for (const auto& path : vsPaths)
     {
         if (fs::exists(path))
+        {
             return path;
+        }
     }
 #endif
     return "";
@@ -226,21 +231,25 @@ std::string NativeToolchain::FindVSInstallation() const
 std::string NativeToolchain::FindCMake() const
 {
 #ifdef _WIN32
-    std::vector<std::string> cmakePaths = {
-        "C:/Program Files/CMake/bin/cmake.exe",
-        "C:/Program Files (x86)/CMake/bin/cmake.exe"
-    };
+    std::vector<std::string> cmakePaths = { "C:/Program Files/CMake/bin/cmake.exe",
+                                            "C:/Program Files (x86)/CMake/bin/cmake.exe" };
 
     for (const auto& path : cmakePaths)
     {
         if (fs::exists(path))
+        {
             return path;
+        }
     }
 #else
     if (fs::exists("/usr/bin/cmake"))
+    {
         return "/usr/bin/cmake";
+    }
     if (fs::exists("/usr/local/bin/cmake"))
+    {
         return "/usr/local/bin/cmake";
+    }
 #endif
     return "";
 }
@@ -278,7 +287,9 @@ std::string NativeToolchain::GetStatus() const
     }
 
     if (m_CMakePath.empty())
+    {
         return "CMake not found. Install CMake and ensure it is on your PATH.";
+    }
 
     return m_Compilers[0].name + " found";
 }
@@ -295,8 +306,7 @@ std::vector<ToolchainComponent> NativeToolchain::GetComponents() const
         ToolchainComponent comp;
         comp.id = "compiler-" + compiler.name;
         comp.displayName = compiler.name;
-        comp.status = compiler.isValid ? ToolchainComponentStatus::Installed
-                                       : ToolchainComponentStatus::NotInstalled;
+        comp.status = compiler.isValid ? ToolchainComponentStatus::Installed : ToolchainComponentStatus::NotInstalled;
         comp.installedVersion = compiler.version;
         comp.canInstall = false;  // System compilers can't be installed by us
         comp.tooltip = compiler.compilerPath;
@@ -324,8 +334,8 @@ std::vector<ToolchainComponent> NativeToolchain::GetComponents() const
         ToolchainComponent comp;
         comp.id = "cmake";
         comp.displayName = "CMake";
-        comp.status = m_CMakePath.empty() ? ToolchainComponentStatus::NotInstalled
-                                          : ToolchainComponentStatus::Installed;
+        comp.status =
+            m_CMakePath.empty() ? ToolchainComponentStatus::NotInstalled : ToolchainComponentStatus::Installed;
         comp.canInstall = false;
         comp.tooltip = m_CMakePath.empty() ? "Install CMake from cmake.org" : m_CMakePath;
         components.push_back(comp);
@@ -341,8 +351,7 @@ std::vector<ToolchainComponent> NativeToolchain::GetComponents() const
 #ifdef _WIN32
 
 int NativeToolchain::ExecuteCommand(const std::string& command, const std::string& workDir,
-                                    BuildOutputCallback outputCallback,
-                                    std::atomic<bool>& cancelRequested)
+                                    BuildOutputCallback outputCallback, std::atomic<bool>& cancelRequested)
 {
     std::string fullCommand = "cmd /c \"cd /d \"" + workDir + "\" && " + command + "\"";
 
@@ -353,7 +362,9 @@ int NativeToolchain::ExecuteCommand(const std::string& command, const std::strin
 
     HANDLE hReadPipe, hWritePipe;
     if (!CreatePipe(&hReadPipe, &hWritePipe, &sa, 0))
+    {
         return -1;
+    }
 
     SetHandleInformation(hReadPipe, HANDLE_FLAG_INHERIT, 0);
 
@@ -371,9 +382,7 @@ int NativeToolchain::ExecuteCommand(const std::string& command, const std::strin
     std::vector<char> cmdBuf(fullCommand.begin(), fullCommand.end());
     cmdBuf.push_back('\0');
 
-    BOOL success = CreateProcessA(
-        NULL, cmdBuf.data(), NULL, NULL, TRUE,
-        CREATE_NO_WINDOW, NULL, NULL, &si, &pi);
+    BOOL success = CreateProcessA(NULL, cmdBuf.data(), NULL, NULL, TRUE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi);
 
     CloseHandle(hWritePipe);
 
@@ -406,13 +415,14 @@ int NativeToolchain::ExecuteCommand(const std::string& command, const std::strin
             std::string line = lineBuffer.substr(0, pos);
             // Remove trailing \r
             if (!line.empty() && line.back() == '\r')
+            {
                 line.pop_back();
+            }
             lineBuffer = lineBuffer.substr(pos + 1);
 
             if (outputCallback && !line.empty())
             {
-                bool isError = (line.find("error") != std::string::npos ||
-                                line.find("Error") != std::string::npos ||
+                bool isError = (line.find("error") != std::string::npos || line.find("Error") != std::string::npos ||
                                 line.find("FAILED") != std::string::npos);
                 outputCallback(line, isError);
             }
@@ -422,8 +432,7 @@ int NativeToolchain::ExecuteCommand(const std::string& command, const std::strin
     // Flush remaining
     if (outputCallback && !lineBuffer.empty())
     {
-        bool isError = (lineBuffer.find("error") != std::string::npos ||
-                        lineBuffer.find("Error") != std::string::npos);
+        bool isError = (lineBuffer.find("error") != std::string::npos || lineBuffer.find("Error") != std::string::npos);
         outputCallback(lineBuffer, isError);
     }
 
@@ -442,13 +451,14 @@ int NativeToolchain::ExecuteCommand(const std::string& command, const std::strin
 #else
 
 int NativeToolchain::ExecuteCommand(const std::string& command, const std::string& workDir,
-                                    BuildOutputCallback outputCallback,
-                                    std::atomic<bool>& cancelRequested)
+                                    BuildOutputCallback outputCallback, std::atomic<bool>& cancelRequested)
 {
     std::string fullCommand = "cd \"" + workDir + "\" && " + command + " 2>&1";
     FILE* pipe = popen(fullCommand.c_str(), "r");
     if (!pipe)
+    {
         return -1;
+    }
 
     char buffer[4096];
     while (fgets(buffer, sizeof(buffer), pipe))
@@ -461,12 +471,13 @@ int NativeToolchain::ExecuteCommand(const std::string& command, const std::strin
 
         std::string line(buffer);
         if (!line.empty() && line.back() == '\n')
+        {
             line.pop_back();
+        }
 
         if (outputCallback && !line.empty())
         {
-            bool isError = (line.find("error") != std::string::npos ||
-                            line.find("Error") != std::string::npos);
+            bool isError = (line.find("error") != std::string::npos || line.find("Error") != std::string::npos);
             outputCallback(line, isError);
         }
     }
@@ -475,7 +486,9 @@ int NativeToolchain::ExecuteCommand(const std::string& command, const std::strin
     // reported as "exit code 512".
     const int status = pclose(pipe);
     if (status == -1)
+    {
         return -1;
+    }
     return WIFEXITED(status) ? WEXITSTATUS(status) : 128 + WTERMSIG(status);
 }
 
