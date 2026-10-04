@@ -1,14 +1,8 @@
-/**
- * @file DesktopHALPackage.cpp
- * @brief Desktop platform host for the Deki Desktop HAL package.
- *
- * Owns the desktop program entry (main) and brings up the desktop HAL
- * (memory + filesystem providers) before the engine initializes. This mirrors
- * the ESP32 HAL package (ESP32HALPackage.cpp), whose ESP32BackendInit sets the
- * device backends before app_main(). Display/input/time come from a separate
- * graphics package (deki-sdl3-integration), exactly as lovyangfx supplies the
- * device display alongside the ESP32 HAL.
- */
+// Desktop platform host. Owns the program entry (main) and sets up the
+// memory and filesystem providers before the engine starts, as
+// ESP32HALPackage.cpp does with ESP32BackendInit before app_main(). Display,
+// input and time come from deki-sdl3-integration, as lovyangfx supplies the
+// display next to the ESP32 HAL.
 
 #include "DesktopHALPackage.h"
 #include <deki/interop/Plugin.h>
@@ -40,12 +34,10 @@ namespace DekiDesktop
 
 }  // namespace DekiDesktop
 
-// The program's entry point, at GLOBAL scope. It has to be: the C++ runtime
-// looks for ::main and nothing else will do, so wrapping it in the package's
-// namespace produced DekiDesktop::main and left every simulator and firmware
-// binary with no entry point at all — a link failure naming WinMain, which
-// points nowhere near the cause. The using-directive below keeps the body
-// reaching the package's own helpers unchanged.
+// The program's entry point. Must stay at global scope: the runtime looks for
+// ::main only, and inside a namespace the link fails with an error naming
+// WinMain, far from the cause. The using-directive lets the body reach the
+// package's own helpers.
 using namespace DekiDesktop;
 
 int main(int argc, char* argv[])
@@ -53,9 +45,9 @@ int main(int argc, char* argv[])
     (void)argc;
     (void)argv;
     setvbuf(stdout, nullptr, _IONBF, 0);  // unbuffered: logs survive a crash
-    // Standalone sim has no editor console; route engine logs to a file next
-    // to the exe (the working directory, which is also where the flash/ and
-    // storage/ partitions live) and echo them on stdout.
+    // The standalone simulator has no editor console: write engine logs to a
+    // file in the working directory (next to flash/ and storage/) and echo
+    // them on stdout.
     Deki::LogSystem::SetLogCallback(
         [](Deki::LogLevel level, const std::string& msg, const char* file, int line)
         {
@@ -70,9 +62,9 @@ int main(int argc, char* argv[])
             }
             printf("%s\n", msg.c_str());
         });
-    // Desktop HAL providers must be live before Deki::Engine::Initialize() runs (it calls
-    // Deki::Memory/Deki::FileSystem::Initialize()). Set them up here in main() rather than a
-    // static initializer to avoid static-init-order issues with the provider singletons.
+    // The providers must exist before Engine::Initialize() runs, since it
+    // initializes Memory and FileSystem. Set here rather than in a static
+    // initializer, so static-init order cannot bite the provider singletons.
     Deki::Memory::SetBackend(new Deki::HostMemoryProvider());
     // Engine::Initialize() then finds the assets in F:/assets/ (./flash/assets/).
     Deki::FileSystem::SetFileSystem(new Deki::DesktopFileSystem());
@@ -86,9 +78,7 @@ namespace DekiDesktop
 
 #ifdef DEKI_EDITOR
 
-// Auto-generated registration helpers
-
-// Track if already registered to avoid duplicates
+// Set once registered, so components register only once.
 static bool s_DesktopHALRegistered = false;
 
 // The exports below are C symbols at global scope; the package's own
@@ -97,9 +87,7 @@ using namespace DekiDesktop;
 
 extern "C"
 {
-    /**
-     * @brief Ensure deki-desktop-hal package is loaded and components are registered
-     */
+    /// Registers the package's components once. Returns how many it has.
     DEKI_DESKTOP_HAL_API int DekiDesktopHALEnsureRegistered(void)
     {
         if (s_DesktopHALRegistered)
@@ -108,14 +96,14 @@ extern "C"
         }
         s_DesktopHALRegistered = true;
 
-        // Auto-generated: registers all Desktop HAL components with ComponentRegistry + ComponentFactory
+        // Generated: registers every component with ComponentRegistry and ComponentFactory.
         ::DekiDesktopHALRegisterComponents();
 
         return ::DekiDesktopHALGetAutoComponentCount();
     }
 
     // =============================================================================
-    // Plugin metadata (for dynamic loading compatibility)
+    // Plugin metadata, read when the package is loaded as a DLL
     // =============================================================================
 
     DEKI_PLUGIN_API const char* DekiPluginGetName(void)
@@ -158,7 +146,7 @@ extern "C"
     }
 
     // =============================================================================
-    // Package-specific feature API (for linked DLL access without name conflicts)
+    // Package-specific API, prefixed so linked DLLs do not clash
     // =============================================================================
 
     DEKI_DESKTOP_HAL_API const char* DekiDesktopHALGetName(void)

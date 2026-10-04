@@ -17,7 +17,7 @@ namespace DekiEditor
 {
 
 // ============================================================================
-// Silent Process Execution (no CMD window)
+// Silent process execution (no console window)
 // ============================================================================
 
 #ifdef _WIN32
@@ -92,7 +92,7 @@ std::string NativeToolchain::RunCommandSilent(const std::string& /*command*/)
 #endif
 
 // ============================================================================
-// Toolchain — System compiler detection
+// System compiler detection
 // ============================================================================
 
 void NativeToolchain::ScanSystemCompilers() const
@@ -108,7 +108,7 @@ void NativeToolchain::ScanSystemCompilers() const
     try
     {
 #ifdef _WIN32
-        // Look for Visual Studio / MSVC
+        // Visual Studio / MSVC
         std::string vsPath = FindVSInstallation();
         if (!vsPath.empty())
         {
@@ -152,7 +152,7 @@ void NativeToolchain::ScanSystemCompilers() const
             }
         }
 
-        // Look for MinGW/MSYS2
+        // MinGW / MSYS2
         std::vector<std::string> mingwPaths = { "C:/msys64/mingw64/bin/g++.exe", "C:/mingw64/bin/g++.exe",
                                                 "C:/MinGW/bin/g++.exe" };
 
@@ -169,7 +169,7 @@ void NativeToolchain::ScanSystemCompilers() const
             }
         }
 #else
-        // Linux/macOS - look for g++ or clang++
+        // Linux / macOS: g++ or clang++
         std::vector<std::pair<std::string, std::string>> compilers = { { "/usr/bin/g++", "GCC" },
                                                                        { "/usr/bin/clang++", "Clang" },
                                                                        { "/usr/local/bin/g++", "GCC (local)" },
@@ -210,7 +210,7 @@ std::string NativeToolchain::FindVSInstallation() const
         }
     }
 
-    // Fallback: check common paths
+    // No vswhere: try the usual install folders.
     std::vector<std::string> vsPaths = { "C:/Program Files/Microsoft Visual Studio/2022/Community",
                                          "C:/Program Files/Microsoft Visual Studio/2022/Professional",
                                          "C:/Program Files/Microsoft Visual Studio/2022/Enterprise",
@@ -258,11 +258,10 @@ bool NativeToolchain::IsInstalled() const
 {
     ScanSystemCompilers();
 
-    // Need at least one compiler and cmake
     bool hasCompiler = !m_Compilers.empty();
     bool hasCMake = !m_CMakePath.empty();
 
-    // Also check PATH as fallback for cmake
+    // CMake not in a known folder: try the one on PATH.
     if (!hasCMake)
     {
         // RunShellCommand, not system(): system() opens a console window from
@@ -300,7 +299,6 @@ std::vector<ToolchainComponent> NativeToolchain::GetComponents() const
 
     std::vector<ToolchainComponent> components;
 
-    // Report each detected compiler
     for (const auto& compiler : m_Compilers)
     {
         ToolchainComponent comp;
@@ -308,12 +306,12 @@ std::vector<ToolchainComponent> NativeToolchain::GetComponents() const
         comp.displayName = compiler.name;
         comp.status = compiler.isValid ? ToolchainComponentStatus::Installed : ToolchainComponentStatus::NotInstalled;
         comp.installedVersion = compiler.version;
-        comp.canInstall = false;  // System compilers can't be installed by us
+        comp.canInstall = false;  // the user installs system compilers
         comp.tooltip = compiler.compilerPath;
         components.push_back(comp);
     }
 
-    // If no compilers found, show a "not installed" entry
+    // No compiler: show one "not installed" entry.
     if (m_Compilers.empty())
     {
         ToolchainComponent comp;
@@ -392,7 +390,6 @@ int NativeToolchain::ExecuteCommand(const std::string& command, const std::strin
         return -1;
     }
 
-    // Read output
     char buffer[4096];
     DWORD bytesRead;
     std::string lineBuffer;
@@ -408,12 +405,11 @@ int NativeToolchain::ExecuteCommand(const std::string& command, const std::strin
         buffer[bytesRead] = '\0';
         lineBuffer += buffer;
 
-        // Process complete lines
+        // Pass on each complete line.
         size_t pos;
         while ((pos = lineBuffer.find('\n')) != std::string::npos)
         {
             std::string line = lineBuffer.substr(0, pos);
-            // Remove trailing \r
             if (!line.empty() && line.back() == '\r')
             {
                 line.pop_back();
@@ -429,7 +425,7 @@ int NativeToolchain::ExecuteCommand(const std::string& command, const std::strin
         }
     }
 
-    // Flush remaining
+    // The last line, if it had no newline.
     if (outputCallback && !lineBuffer.empty())
     {
         bool isError = (lineBuffer.find("error") != std::string::npos || lineBuffer.find("Error") != std::string::npos);
@@ -482,8 +478,8 @@ int NativeToolchain::ExecuteCommand(const std::string& command, const std::strin
         }
     }
 
-    // pclose returns a wait status, not the exit code: a build exiting 2 was
-    // reported as "exit code 512".
+    // pclose returns a wait status, not the exit code: decode it, or exit
+    // code 2 reads as 512.
     const int status = pclose(pipe);
     if (status == -1)
     {

@@ -1,14 +1,9 @@
 #pragma once
 
-/**
- * @file DesktopHALPackage.h
- * @brief Central header for the Deki Desktop HAL Package
- *
- * Desktop platform host: provides the program entry (main) and brings up the
- * desktop memory + filesystem HAL before the engine initializes (see
- * DesktopHALPackage.cpp, guarded by SIMULATOR). Display/input/time are supplied
- * by the separate deki-sdl3-integration package.
- */
+// Desktop HAL package. Provides the program entry (main) and sets up the
+// desktop memory and filesystem providers before the engine starts (see
+// DesktopHALPackage.cpp, under SIMULATOR). Display, input and time come from
+// the deki-sdl3-integration package.
 
 // DLL export macro
 #ifdef _WIN32

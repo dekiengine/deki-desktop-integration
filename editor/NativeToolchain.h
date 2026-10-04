@@ -8,12 +8,8 @@
 namespace DekiEditor
 {
 
-/**
- * @brief Native toolchain system compiler detection and command execution
- *
- * Detects system C++ compilers (MSVC, MinGW, GCC, Clang) and CMake.
- * Executes build commands for native desktop targets.
- */
+/// Finds the system C++ compilers (MSVC, MinGW, GCC, Clang) and CMake, and
+/// runs build commands for native desktop targets.
 class NativeToolchain
 {
 public:
@@ -36,11 +32,13 @@ public:
     std::string GetStatus() const;
     std::vector<ToolchainComponent> GetComponents() const;
 
-    // Execute command
+    /// Runs `command` in `workDir`, passing each output line to
+    /// `outputCallback`. Returns the exit code, or -1 when it cannot start.
     int ExecuteCommand(const std::string& command, const std::string& workDir, BuildOutputCallback outputCallback,
                        std::atomic<bool>& cancelRequested);
 
-    // Silent process execution helper (Windows)
+    /// Runs `command` without a console window and returns its output, trimmed.
+    /// Windows only; returns "" elsewhere.
     static std::string RunCommandSilent(const std::string& command);
 
 private:

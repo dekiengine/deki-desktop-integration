@@ -44,11 +44,11 @@ const char* const kNativeExecutableName = "DekiGame";
 //       "prebuilt": { "windows-mingw": { "url": "...", "sha256": "...",
 //           "cmakeDir": "SDL3-3.2.8/x86_64-w64-mingw32/lib/cmake/SDL3",
 //           "includeDir": "SDL3-3.2.8/x86_64-w64-mingw32/include" } } } ] }
-// Unpacked under <project>/generated/deps and consumed through its CMake
-// package instead of being built from source.
+// Unpacked under <project>/generated/deps and used through its CMake package
+// instead of a source build.
 //
-// This shape is this backend's own. The editor hands over each declaration as
-// written (CMakeGen::FrameworkDependency) and does not know what is in it.
+// This shape belongs to this backend. The editor passes each declaration on
+// as written (CMakeGen::FrameworkDependency) without reading it.
 struct NativePrebuilt
 {
     std::string url;         // https archive
@@ -57,8 +57,8 @@ struct NativePrebuilt
     std::string includeDir;  // public headers, relative to the archive root
 };
 
-// A third-party library a package needs in a desktop build. The version is
-// the package's to choose; the builder only follows it.
+// A third-party library a package needs in a desktop build. The package
+// picks the version; the builder follows it.
 struct NativeDependency
 {
     std::string name;                                // e.g. "SDL3"
@@ -68,7 +68,7 @@ struct NativeDependency
 };
 
 // Only the object form describes a library to fetch. A bare string under
-// "native" names nothing this backend can act on, and never did.
+// "native" is ignored.
 bool ParseNativeDependency(const CMakeGen::FrameworkDependency& declared, NativeDependency& out)
 {
     if (declared.json.empty())
@@ -124,8 +124,7 @@ NativeBuilder::~NativeBuilder()
 
 std::string NativeBuilder::GetBuildDirectory(const std::string& projectPath) const
 {
-    // Under build/ alongside the other platforms (build/<platform>): ESP-IDF uses
-    // build/<id>.
+    // build/native, next to the other platforms' build/<id> folders.
     return (ProjectPaths::Build(projectPath) / "native").string();
 }
 
@@ -164,9 +163,9 @@ void NativeBuilder::Deploy(const std::string& projectPath, const std::string& /*
 {
     std::string buildDir = GetBuildDirectory(projectPath);
 
-    // The generated project is configured with -G Ninja, which is
-    // single-config, so build/bin is where the executable lands. The
-    // per-config directories below are for a multi-config generator.
+    // The generated project uses Ninja, which is single-config, so the
+    // executable lands in build/bin. The per-config folders below cover a
+    // multi-config generator.
     std::string exePath;
     std::vector<std::string> candidates = { buildDir + "/build/bin/" + kNativeExecutableName,
                                             buildDir + "/build/bin/Release/" + kNativeExecutableName,
@@ -198,8 +197,8 @@ void NativeBuilder::Deploy(const std::string& projectPath, const std::string& /*
         outputCallback("Launching: " + exePath, false);
     }
 
-    // From its own directory: the deployed storage partitions sit beside
-    // it and it resolves them relative to the working directory.
+    // Run from its own folder: it finds the storage partitions beside it
+    // through the working directory.
     const std::string workDir = fs::path(exePath).parent_path().string();
     if (LaunchDetachedInDirectory(exePath, {}, workDir))
     {
@@ -257,19 +256,19 @@ void NativeBuilder::DoBuild(const std::string& projectPath, BuildOutputCallback 
         outputCallback("Engine path: " + enginePath, false);
     }
 
-    // Always regenerate the build files so package changes (add/remove, PACKAGE_PREFIX edits,
-    // junction fixes) propagate. Both CMakeLists.txt and deki_package_init.gen.cpp are written
-    // through WriteIfChanged, so an unchanged build leaves their timestamps untouched and CMake
-    // skips the reconfigure/recompile. Guarding on "CMakeLists.txt exists" instead left a stale
-    // deki_package_init.gen.cpp behind that kept calling SDL3_RegisterComponents() after the
-    // package's prefix became DekiSDL3, breaking the link.
+    // Always regenerate the build files, so package changes (added or removed
+    // packages, PACKAGE_PREFIX edits) reach the build. Both CMakeLists.txt and
+    // deki_package_init.gen.cpp go through WriteIfChanged, so an unchanged
+    // build keeps their timestamps and CMake skips the rebuild. Must not be
+    // skipped when CMakeLists.txt exists: a stale deki_package_init.gen.cpp
+    // calls registration functions that no longer exist and the link fails.
     if (outputCallback)
     {
         outputCallback("Generating build files...", false);
     }
     // Third-party libraries the packages declared (SDL3): fetch a prebuilt
     // archive where one is published for this host, else note the version
-    // for a source build. Runs before the build files so they can name it.
+    // for a source build. Runs before the build files, which name the result.
     SetProgress(BuildState::Building, "Resolving native dependencies...", 0.05f);
     if (progressCallback)
     {
@@ -494,12 +493,11 @@ const char* NativeBuilder::HostPrebuiltKey()
 #endif
 }
 
-// Resolve every native dependency the active packages declare. A prebuilt
-// archive for this host is downloaded (pinned SHA-256, refused otherwise),
-// unpacked under <project>/generated/deps/<name>-<version>/ and remembered
-// by the SHA-256 it came from, so a later build only checks the marker.
-// Anything that cannot be fetched falls back to a source build, which the
-// generated CMake performs at release-<version>.
+// Resolves every native dependency the active packages declare. A prebuilt
+// archive for this host is downloaded (only with a pinned SHA-256), unpacked
+// under <project>/generated/deps/<name>-<version>/ and marked with that
+// SHA-256, so a later build only checks the marker. Anything that cannot be
+// fetched is built from source at release-<version> by the generated CMake.
 bool NativeBuilder::PrepareNativeDependencies(const std::string& projectPath, BuildOutputCallback outputCallback)
 {
     m_NativeDeps.clear();
@@ -650,9 +648,9 @@ bool NativeBuilder::GenerateCMakeLists(const std::string& projectPath, const std
         CMakeGen::ResolveProjectTransformWidth(allPackages, CMakeGen::ReadProjectTags(projectPath), &transformWhy);
     const std::vector<std::string> transformDefines = CMakeGen::TransformDefines(transformWidth);
 
-    // What this build leaves out (services/FeatureResolver): the stripped
+    // What this build strips (services/FeatureResolver): the stripped
     // components' sources stay out of the package globs and their headers out
-    // of the reflection codegen, so nothing references what is not compiled.
+    // of the reflection codegen, so nothing refers to code that is not built.
     const StripPlan strip = ComputeStripPlan(projectPath, m_PlatformConfig.id);
     for (const auto& w : strip.warnings)
     {
@@ -673,29 +671,23 @@ bool NativeBuilder::GenerateCMakeLists(const std::string& projectPath, const std
     file << "project(DekiGame LANGUAGES C CXX)\n\n";
 
     // The project's own layout: src/ and packages/ under its root. This file
-    // is rewritten on every build, so an absolute root is fine (a relative
-    // one used to point at a staging folder that no longer exists).
+    // is rewritten on every build, so an absolute root is safe.
     file << "set(DEKI_PROJECT_ROOT \"" << ToCMakePath(projectPath) << "\")\n\n";
 
-    // C++23, the same as the editor-side package build (BuildFileGenerator) and
-    // as ESP-IDF forces for a device target. This said 17 from the first
-    // release, which went unnoticed while the engine's public headers happened
-    // to stay inside C++17. It stopped being true in 0.15.0: allocation context
-    // capture includes <source_location>, which is C++20, and it is on unless a
-    // build asks for it to be stripped. From then until this was fixed the
-    // simulator could not compile the engine at all, and the error pointed at
-    // Memory.h rather than at the standard.
+    // C++23, the same as the editor's package build (BuildFileGenerator) and
+    // what ESP-IDF forces for a device. Must be at least C++20: the engine's
+    // allocation tracking includes <source_location>, and with C++17 the error
+    // points at Memory.h rather than at the standard.
     file << "set(CMAKE_CXX_STANDARD 23)\n";
     file << "set(CMAKE_CXX_STANDARD_REQUIRED ON)\n\n";
 
-    // Output directories
     file << "set(CMAKE_RUNTIME_OUTPUT_DIRECTORY \"${CMAKE_BINARY_DIR}/bin\")\n";
     file << "set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG \"${CMAKE_BINARY_DIR}/bin/Debug\")\n";
     file << "set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE \"${CMAKE_BINARY_DIR}/bin/Release\")\n\n";
 
-    // Engine path is supplied at configure time (-DDEKI_ENGINE_PATH) instead of being
-    // baked in: a literal here is only correct until the editor install is moved or
-    // renamed, and nothing regenerates this file at that moment.
+    // The engine path comes at configure time (-DDEKI_ENGINE_PATH), not as a
+    // literal here: the editor install can move, and nothing regenerates this
+    // file when it does.
     file << "# Deki Engine — path supplied by the editor at configure time\n";
     file << "if(NOT DEKI_ENGINE_PATH)\n";
     file << "    message(FATAL_ERROR\n";
@@ -703,18 +695,18 @@ bool NativeBuilder::GenerateCMakeLists(const std::string& projectPath, const std
     file << "        \"Build this project from the editor rather than invoking CMake directly.\")\n";
     file << "endif()\n\n";
 
-    // Engine component metadata (src/generated/*.gen.cpp) is produced by the editor build
-    // and reused here via the deki-engine subdirectory below — no separate codegen step.
+    // Engine component metadata (src/generated/*.gen.cpp) comes from the editor
+    // build and is reused through the deki-engine subdirectory below.
 
     // SDL3. deki-sdl3-integration declares it in package.json under
     // dependencies.native (name, version, git, prebuilt archives per host) and
-    // PrepareNativeDependencies() resolved that before this file was written.
+    // PrepareNativeDependencies() resolved that before this file is written.
     // Prebuilt: SDL's own release archive, unpacked under <project>/generated/
-    // deps and consumed through its CMake package, so the project holds no
-    // SDL3 build tree at all (on Windows that tree is what pushed a deep
-    // project folder past the 260-character path limit). Source: FetchContent
-    // at release-<version>, pointed at the editor's own checkout when that is
-    // the same version, so nothing is cloned.
+    // deps and used through its CMake package, so the project holds no SDL3
+    // build tree (on Windows that tree pushes a deep project folder past the
+    // 260-character path limit). Source: FetchContent at release-<version>,
+    // pointed at the editor's own checkout when that is the same version, so
+    // nothing is cloned.
     ResolvedNativeDependency sdl3;
     if (auto it = m_NativeDeps.find("SDL3"); it != m_NativeDeps.end())
     {
@@ -763,10 +755,9 @@ bool NativeBuilder::GenerateCMakeLists(const std::string& projectPath, const std
         file << "set(DEKI_SDL3_INCLUDE \"\")\n\n";
     }
 
-    // OpenGL
     file << "find_package(OpenGL REQUIRED)\n\n";
 
-    // Add engine as subdirectory (builds as static library without DEKI_EDITOR)
+    // The engine as a subdirectory: a static library without DEKI_EDITOR.
     file << "# Engine (static library, non-editor mode)\n";
     file << "set(DEKI_TRANSFORM_2D " << (transformWidth != CMakeGen::TransformWidth::None ? "ON" : "OFF")
          << " CACHE BOOL \"\" FORCE)\n";
@@ -775,19 +766,15 @@ bool NativeBuilder::GenerateCMakeLists(const std::string& projectPath, const std
     file << "message(STATUS \"Deki transform: " << CMakeGen::EscapeCMakeString(transformWhy) << "\")\n";
     file << "add_subdirectory(\"${DEKI_ENGINE_PATH}\" \"${CMAKE_BINARY_DIR}/deki-engine\")\n\n";
 
-    // Make engine link SDL3 and OpenGL (needed by SDL3 package)
+    // The engine links SDL3 and OpenGL, which the SDL3 package needs.
     file << "target_link_libraries(deki-engine-core PUBLIC ${DEKI_SDL3_TARGET} OpenGL::GL)\n\n";
 
-    // What the engine has to be told about its target. The engine's own CMake
-    // used to do this under `if(DEFINED SIMULATOR)`: it knew this target by
-    // name, forced three packages' defines on (so a stripped package's define
-    // came back in through the engine), and compiled itself for 320x240 RGB565
-    // whatever the platform said - so Engine.cpp set the renderer up at one
-    // size while the game was built for another. The target's backend says it
-    // now, from the platform.
+    // What the engine has to be told about its target, taken from the
+    // platform. The engine's CMake must not hard-code it: it would build at
+    // a fixed screen size and format whatever the platform says.
     {
-        // Reaches a generated CMake file, and a platform JSON can arrive in a
-        // board pack or a package.
+        // Validated: it lands in a generated CMake file, and a platform JSON
+        // can come from a board pack or a package.
         const std::string colorFormat = config.colorFormat.empty() ? std::string("RGB565") : config.colorFormat;
         for (char c : colorFormat)
         {
@@ -810,8 +797,8 @@ bool NativeBuilder::GenerateCMakeLists(const std::string& projectPath, const std
         file << "    \"DEKI_FAST_ATTR=\")\n";
     }
 
-    // The engine subdir only defines DEKI_LOG_ENABLED for editor builds; the desktop
-    // simulator is a debugging tool, so route engine-core logs through the callback too.
+    // The engine defines DEKI_LOG_ENABLED only for editor builds. The desktop
+    // simulator is a debugging tool, so it gets engine-core logs too.
     file << "# Desktop simulator: enable engine-core logging (it's a debug build target)\n";
     file << "target_compile_definitions(deki-engine-core PUBLIC DEKI_LOG_ENABLED)\n";
     // The engine's internal trace (DEKI_LOG_INTERNAL: lifecycle, asset lookups,
@@ -823,26 +810,27 @@ bool NativeBuilder::GenerateCMakeLists(const std::string& projectPath, const std
     }
     file << "\n";
 
-    // Project sources. PluginExports.cpp is editor/DLL export glue (uses editor-only
-    // GetComponentMeta) — the static exe registers components via the init file below.
+    // Project sources. PluginExports.cpp is DLL export glue for the editor (it
+    // uses editor-only GetComponentMeta); the static exe registers components
+    // through the init file below.
     CMakeGen::EmitProjectSourceCollection(file, "${DEKI_PROJECT_ROOT}/src");
     file << "list(FILTER PROJECT_SOURCES EXCLUDE REGEX \"PluginExports\\\\.cpp$\")\n";
     file << "\n";
 
-    // Package package discovery. Static build (one exe, not DLLs), so: define each package's
-    // *_EXPORTS (dllexport, not dllimport), collect declared system libs, exclude the
-    // DekiPlugin_* DLL-export entry (which collides across packages) EXCEPT the platform
-    // entry that defines main(), and compile each package's generated metadata + vendored .c.
+    // Package discovery. One static exe, not DLLs, so: define each package's
+    // *_EXPORTS (dllexport, not dllimport), collect declared system libs, leave
+    // out each package's DLL-export entry (they collide across packages) except
+    // the platform entry that defines main(), and compile each package's
+    // generated metadata and vendored .c files.
     file << "# Package packages\n";
     file << "set(_ALL_PACKAGE_SOURCES \"\")\n";
     file << "set(PACKAGE_INCLUDE_DIRS \"\")\n";
     file << "set(PACKAGE_DEFINES \"\")\n";
     file << "message(STATUS \"Deki stripping: " << CMakeGen::EscapeCMakeString(strip.summary) << "\")\n";
     file << "set(_DEKI_STRIP_SRC_REGEX \"" << CMakeGen::EscapeCMakeString(stripSourceRegex) << "\")\n";
-    // Accumulators are named _ALL_* because every include(package.cmake)
-    // sets PACKAGE_SOURCES, PACKAGE_SYSTEM_LIBS and friends for that package;
-    // accumulating into the same names lost every package but the last (and
-    // put bare file names such as SDL3DisplaySetup.cpp into the executable).
+    // Totals are named _ALL_* because every include(package.cmake) sets
+    // PACKAGE_SOURCES, PACKAGE_SYSTEM_LIBS and the like for that package.
+    // Must stay separate names: sharing them keeps only the last package.
     file << "set(_ALL_SYSTEM_LIBS \"\")\n";
     // Reflection codegen inputs, filled by the package loop below.
     file << "set(_RC_PKG_DIRS \"\")\n";
@@ -876,11 +864,11 @@ bool NativeBuilder::GenerateCMakeLists(const std::string& projectPath, const std
     file << "    foreach(SRC ${_MOD_SRCS})\n";
     file << "        string(FIND \"${SRC}\" \"/editor/\" _IS_EDITOR)\n";
     file << "        string(FIND \"${SRC}\" \"/tests/\" _IS_TESTS)\n";
-    // Skip the package's checked-in generated/ dir. Reflection .gen.cpp is
-    // configuration-specific — the copy sitting there was produced by the editor
-    // plugin build with DEKI_EDITOR defined, so it references editor-only members
-    // (e.g. TextComponent::fontSize) that do not exist in a runtime build. This
-    // build generates its own below.
+    // Skip the package's generated/ folder. Reflection .gen.cpp depends on the
+    // configuration: the copy there comes from the editor plugin build with
+    // DEKI_EDITOR defined, so it refers to editor-only members (such as
+    // TextComponent::fontSize) missing from a runtime build. This build
+    // generates its own below.
     file << "        string(FIND \"${SRC}\" \"/generated/\" _IS_GEN)\n";
     file << "        set(_IS_STRIPPED FALSE)\n";
     file << "        if(_DEKI_STRIP_SRC_REGEX AND \"${SRC}\" MATCHES \"${_DEKI_STRIP_SRC_REGEX}\")\n";
@@ -893,8 +881,8 @@ bool NativeBuilder::GenerateCMakeLists(const std::string& projectPath, const std
     file << "    endforeach()\n";
     file << "    list(APPEND PACKAGE_INCLUDE_DIRS \"${PACKAGE_DIR}\")\n";
     // Codegen inputs, collected in the same pass. Output goes under this build
-    // directory rather than into the package, so the editor and firmware builds
-    // cannot clobber each other's reflection.
+    // folder, not into the package, so the editor and firmware builds cannot
+    // overwrite each other's reflection.
     file << "    get_filename_component(_MOD_NAME \"${PACKAGE_DIR}\" NAME)\n";
     file << "    unset(PACKAGE_PREFIX)\n";
     file << "    include(\"${PACKAGE_CMAKE}\")\n";
@@ -903,11 +891,11 @@ bool NativeBuilder::GenerateCMakeLists(const std::string& projectPath, const std
     file << "        list(APPEND _RC_PKG_TAGS \"${_MOD_NAME}\")\n";
     file << "        list(APPEND _RC_PKG_PREFIXES \"${PACKAGE_PREFIX}\")\n";
     file << "        list(APPEND _RC_PKG_OUTDIRS \"${CMAKE_BINARY_DIR}/refl/${_MOD_NAME}/generated\")\n";
-    // The package's own headers do #include \"generated/X.gen.h\". A quoted include
-    // resolves against the including file's directory first, so a package that has
-    // been built by the editor keeps using its local .gen.h — which is fine, those
-    // are declaration-only and configuration-independent. On a clean machine that
-    // directory does not exist, and this -I makes the same include resolve here.
+    // The package's headers do #include \"generated/X.gen.h\". A quoted include
+    // looks in the including file's folder first, so a package the editor has
+    // built uses its local .gen.h, which is safe: those hold declarations only
+    // and do not depend on the configuration. On a clean machine that folder
+    // does not exist, and this -I makes the include resolve here.
     file << "        list(APPEND PACKAGE_INCLUDE_DIRS \"${CMAKE_BINARY_DIR}/refl/${_MOD_NAME}\")\n";
     file << "    endif()\n";
     file << "endforeach()\n\n";
@@ -915,9 +903,9 @@ bool NativeBuilder::GenerateCMakeLists(const std::string& projectPath, const std
     // =========================================================================
     // Reflection codegen for this configuration
     // =========================================================================
-    // Reflection output depends on the compile defines it is generated under, so
-    // a runtime build cannot reuse what the editor produced. Generate it here,
-    // with this build's defines and without DEKI_EDITOR, into this build dir.
+    // Reflection output depends on the defines it is generated under, so a
+    // runtime build cannot reuse the editor's. Generate it here, with this
+    // build's defines and without DEKI_EDITOR, into this build folder.
     file << "# Reflection codegen (runtime configuration — no DEKI_EDITOR)\n";
     file << "if(NOT DEKI_GXX16)\n";
     file << "    find_program(DEKI_GXX16 NAMES g++-16 g++ PATHS \"C:/msys64/mingw64/bin\" NO_DEFAULT_PATH)\n";
@@ -937,9 +925,9 @@ bool NativeBuilder::GenerateCMakeLists(const std::string& projectPath, const std
     file << "        \"${DEKI_ENGINE_PATH}/third_party\"\n";
     file << "        \"${DEKI_PROJECT_ROOT}/packages\"\n";
     file << "        \"${DEKI_PROJECT_ROOT}/src\")\n";
-    // The codegen parses package headers directly, so it needs the same third-party
-    // includes the compile step gets transitively from linked targets — otherwise
-    // e.g. deki-sdl3-integration fails on <SDL3/SDL.h>.
+    // The codegen parses package headers itself, so it needs the third-party
+    // include paths the compiler gets from linked targets; without them
+    // deki-sdl3-integration fails on <SDL3/SDL.h>.
     file << "    if(DEKI_SDL3_INCLUDE)\n";
     file << "        list(APPEND _RC_INCS \"${DEKI_SDL3_INCLUDE}\")\n";
     file << "    endif()\n";
@@ -992,26 +980,25 @@ bool NativeBuilder::GenerateCMakeLists(const std::string& projectPath, const std
     file << "    endforeach()\n";
     file << "endif()\n\n";
 
-    // Static registration init file (defines DekiRegisterProjectPackages(), which the
-    // engine calls at startup) — same mechanism the firmware build uses for non-DLL targets.
-    // Scan the project itself: two levels up from the build directory used to
-    // be the project root and is generated/ now, which holds no packages, so
-    // the init file came out empty and every scene component was "missing".
+    // Static registration init file. It defines DekiRegisterProjectPackages(),
+    // which the engine calls at startup, as the firmware build does for
+    // non-DLL targets. Scan the project root itself: the build folder's
+    // parents hold no packages, and an empty init file leaves every scene
+    // component "missing".
     const std::string& projRoot = projectPath;
-    // engineDefinesSystemInit=true: the static sim links deki-engine-core's committed
-    // empty DekiInitPackageSystems() stub, so the init file inlines the package
-    // *_InitSystem() calls into DekiRegisterProjectPackages() instead of redefining
-    // that symbol (which would collide at link time).
+    // engineDefinesSystemInit=true: the static sim links deki-engine-core's
+    // empty DekiInitPackageSystems() stub, so the init file puts the packages'
+    // *_InitSystem() calls inside DekiRegisterProjectPackages() rather than
+    // defining that symbol a second time, which would fail to link.
     std::string packageInitName = fs::path(CMakeGen::GeneratePackageInitFile(buildDir, allPackages, activeIds,
                                                                              fs::path(GetSourceDirectory(projRoot)),
                                                                              /*engineDefinesSystemInit=*/true))
                                       .filename()
                                       .string();
 
-    // Executable
     file << "# Executable\n";
-    // Package entry sources come from the package loop above (only the platform entry that
-    // defines main() is kept). Never hardcode a specific package here.
+    // Package entry sources come from the package loop above, which keeps only
+    // the platform entry that defines main(). Never name a package here.
     file << "add_executable(DekiGame\n";
     file << "    \"${DEKI_ENGINE_PATH}/entry/Main.cpp\"\n";
     file << "    \"${CMAKE_SOURCE_DIR}/" << packageInitName << "\"\n";
@@ -1019,8 +1006,8 @@ bool NativeBuilder::GenerateCMakeLists(const std::string& projectPath, const std
     file << "    ${_ALL_PACKAGE_SOURCES}\n";
     file << ")\n\n";
 
-    // Order the build-time codegen before compilation, so an edited component
-    // header regenerates its metadata rather than compiling against a stale copy.
+    // Run the codegen before compiling, so an edited component header
+    // regenerates its metadata instead of compiling against a stale copy.
     file << "foreach(_RC_TAG ${_RC_PKG_TAGS})\n";
     file << "    string(MAKE_C_IDENTIFIER \"${_RC_TAG}\" _RC_TAGID)\n";
     file << "    if(DEKI_RC_TARGETS_${_RC_TAGID})\n";
@@ -1028,14 +1015,14 @@ bool NativeBuilder::GenerateCMakeLists(const std::string& projectPath, const std
     file << "    endif()\n";
     file << "endforeach()\n\n";
 
-    // Include paths. The static exe pulls cross-package headers ("deki-rendering/...") so
-    // project/packages must be on the path, plus each package dir (PACKAGE_INCLUDE_DIRS).
-    // Package dirs come BEFORE project/src: a game and a package may share a header
-    // filename (a project's src/FsmNodes.h vs deki-fsm/FsmNodes.h), and a
-    // package's generated reflection includes its headers unqualified. With
-    // project/src first, that resolves to the game's file and the package's types
-    // vanish. Game sources are unaffected — a quoted include still resolves
-    // against the including file's own directory first.
+    // Include paths. The exe includes headers across packages
+    // ("deki-rendering/..."), so project/packages is on the path, plus each
+    // package folder (PACKAGE_INCLUDE_DIRS). Package folders must come before
+    // project/src: a game and a package may share a header name (src/FsmNodes.h
+    // and deki-fsm/FsmNodes.h), and a package's generated reflection includes
+    // its headers unqualified, so with src first it finds the game's file.
+    // Game sources still work: a quoted include looks in the including file's
+    // own folder first.
     file << "target_include_directories(DekiGame PRIVATE\n";
     file << "    \"${DEKI_ENGINE_PATH}/include\"\n";
     file << "    \"${DEKI_ENGINE_PATH}/third_party\"\n";
@@ -1044,7 +1031,7 @@ bool NativeBuilder::GenerateCMakeLists(const std::string& projectPath, const std
     file << "    \"${DEKI_PROJECT_ROOT}/src\"\n";
     file << ")\n\n";
 
-    // Link (deki-engine-core + SDL3/OpenGL + package-declared system libs e.g. winhttp)
+    // Link deki-engine-core, SDL3, OpenGL and the system libs packages declare (such as winhttp).
     file << "target_link_libraries(DekiGame PRIVATE deki-engine-core ${DEKI_SDL3_TARGET} OpenGL::GL "
             "${_ALL_SYSTEM_LIBS})\n\n";
 
@@ -1056,7 +1043,6 @@ bool NativeBuilder::GenerateCMakeLists(const std::string& projectPath, const std
     file << "        COMMENT \"Copying SDL3 next to DekiGame\")\n";
     file << "endif()\n\n";
 
-    // Compile definitions
     file << "# Platform defines\n";
     file << "target_compile_definitions(DekiGame PRIVATE\n";
     file << "    SIMULATOR\n";
@@ -1083,7 +1069,6 @@ bool NativeBuilder::GenerateCMakeLists(const std::string& projectPath, const std
     }
     file << ")\n\n";
 
-    // Compiler flags
     if (!config.cFlags.empty())
     {
         file << "target_compile_options(DekiGame PRIVATE\n";
@@ -1096,13 +1081,11 @@ bool NativeBuilder::GenerateCMakeLists(const std::string& projectPath, const std
         file << ")\n\n";
     }
 
-    // A platform's cxxFlags may not choose the language standard. These land
-    // AFTER the ones CMAKE_CXX_STANDARD generates, so a "-std=" here silently
-    // wins over it, and every simulator platform written before this carries
-    // "-std=c++17" in its JSON from the old built-in config. That is what made
-    // the engine fail to compile against <source_location>, with an error
-    // pointing at Memory.h and nothing pointing here. The standard is the
-    // build's decision; drop any attempt to set it and say so once.
+    // A platform's cxxFlags may not choose the language standard. They come
+    // after the flag CMAKE_CXX_STANDARD adds, so a "-std=" here wins silently,
+    // and older simulator platforms carry "-std=c++17" in their JSON. With it
+    // the engine fails on <source_location>, with an error pointing at
+    // Memory.h. The build sets the standard: drop any "-std=" and warn once.
     std::vector<std::string> cxxFlags;
     std::vector<std::string> droppedStd;
     for (const auto& flag : config.cxxFlags)
@@ -1150,26 +1133,26 @@ bool NativeBuilder::GenerateCMakeLists(const std::string& projectPath, const std
         file << ")\n\n";
     }
 
-    // Windows: console subsystem so the program uses main() (the platform package entry).
+    // Windows: console subsystem, so the program starts at main() (the platform package entry).
     file << "# Windows: subsystem\n";
     file << "if(WIN32)\n";
     file << "    set_target_properties(DekiGame PROPERTIES WIN32_EXECUTABLE FALSE)\n";
     file << "endif()\n\n";
 
-    // The storage partitions are deployed next to the exe by DeployPartitions()
-    // after the build, not by a POST_BUILD command: the CMake version tested
-    // the source directories at configure time, so a partition exported after
-    // the first configure was never copied.
+    // DeployPartitions() copies the storage partitions next to the exe after
+    // the build. Not a POST_BUILD command: CMake checks the source folders at
+    // configure time, so a partition exported after the first configure would
+    // never be copied.
 
     return CMakeGen::WriteIfChanged(fs::path(buildDir) / "CMakeLists.txt", file.str());
 }
 
-// Copy the internal storage next to the exe so the simulator's F:/ resolves
-// (DesktopFileSystem maps it relative to the exe's directory, which Flash()
-// uses as the working directory):
+// Copies the internal storage next to the exe so the simulator's F:/
+// resolves (DesktopFileSystem maps it relative to the working directory, and
+// the exe runs from its own folder):
 //   flash/ <- project_data.bin, the boot scene and assets/ (F:/assets/),
 //             written by FirmwareBuildService into <build>/spiffs_data
-// S:/ (storage/) is the game's own to write; a build puts nothing there.
+// S:/ (storage/) belongs to the game to write; a build leaves it empty.
 bool NativeBuilder::DeployPartitions(const std::string& projectPath, const std::string& buildDir,
                                      BuildOutputCallback outputCallback)
 {
@@ -1304,10 +1287,8 @@ std::unique_ptr<IPlatformEditorUI> NativeBuilder::CreateEditorUI(const PlatformC
 // ---------------------------------------------------------------------------
 // Builder plugin entry points
 //
-// This backend was compiled into DekiEditor.exe. It lives in the package for
-// the target it serves now and reaches the editor through the same plugin ABI
-// a third-party or NDA'd backend uses - so that path is the only path,
-// exercised on every build, and cannot quietly rot.
+// This backend reaches the editor through the same plugin ABI a third-party
+// or NDA'd backend uses, so that path is tested on every build.
 //
 // In editor/ so the editor-side package DLL picks it up and firmware builds,
 // which filter editor/ out, do not.

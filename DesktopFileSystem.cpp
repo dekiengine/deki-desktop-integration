@@ -24,8 +24,8 @@ bool DesktopFileSystem::Initialize()
         return true;
     }
 
-    // Files are relative to the current working directory. The simulator mirrors
-    // the device's two storage mounts:
+    // Paths are relative to the working directory. The simulator mirrors the
+    // device's two storage mounts:
     //   "S:/" (SD card) -> "./storage/"  (exported/packed assets)
     //   "F:/" (flash)   -> "./flash/"    (boot scene + project settings, from the SPIFFS export)
     m_BasePath = "./storage/";
@@ -47,15 +47,15 @@ std::string DesktopFileSystem::ConvertPathInternal(const char* virtualPath)
     }
 
     std::string path(virtualPath);
-    // Convert "S:/..." to "./storage/..." (SD card mount)
+    // "S:/..." -> "./storage/..." (SD card mount)
     if (path.length() >= 3 && path.substr(0, 3) == "S:/")
     {
-        path = m_BasePath + path.substr(3);  // Remove "S:/" and prepend m_BasePath
+        path = m_BasePath + path.substr(3);
     }
-    // Convert "F:/..." to "./flash/..." (flash mount: boot scene + project settings)
+    // "F:/..." -> "./flash/..." (flash mount)
     else if (path.length() >= 3 && path.substr(0, 3) == "F:/")
     {
-        path = m_FlashPath + path.substr(3);  // Remove "F:/" and prepend m_FlashPath
+        path = m_FlashPath + path.substr(3);
     }
     return path;
 }
@@ -173,7 +173,6 @@ long DesktopFileSystem::GetFileSize(FileHandle handle)
 
     long size = ftell(file);
 
-    // Restore original position
     fseek(file, currentPos, SEEK_SET);
 
     return size;

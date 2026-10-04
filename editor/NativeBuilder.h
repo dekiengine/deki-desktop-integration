@@ -11,13 +11,9 @@
 namespace DekiEditor
 {
 
-/**
- * @brief Native (Desktop) firmware builder implementation
- *
- * Builds standalone desktop executables using CMake + system C++ compiler.
- * Generates a CMakeLists.txt that includes the Deki engine, SDL3, and game sources.
- * Delegates compiler detection and command execution to NativeToolchain.
- */
+/// Builds standalone desktop executables with CMake and the system C++
+/// compiler. Generates a CMakeLists.txt holding the engine, SDL3 and the game
+/// sources. NativeToolchain finds the compiler and runs the commands.
 class NativeBuilder : public FirmwareBuilderBase
 {
 public:
@@ -27,8 +23,8 @@ public:
     // Core operations
     void Build(const std::string& projectPath, BuildOutputCallback outputCallback = nullptr,
                BuildProgressCallback progressCallback = nullptr) override;
-    // Deploy = run what was built, on this machine. Nothing to aim it at, so
-    // no targets are enumerated and the UI shows no selector.
+    // Deploy runs what was built on this machine, so there are no deploy
+    // targets and the UI shows no selector.
     bool SupportsDeploy() const override { return true; }
     const char* GetDeployLabel() const override { return "Run"; }
     void Deploy(const std::string& projectPath, const std::string& deployTargetId,
@@ -40,7 +36,7 @@ public:
     // Toolchain
     bool IsToolchainInstalled() const override;
     std::string GetToolchainStatus() const override;
-    // Toolchain component API — reports system compilers
+    // Reports the system compilers and CMake.
     std::vector<ToolchainComponent> GetToolchainComponents() const override;
 
     // Build file generation
@@ -49,9 +45,8 @@ public:
 
     // Identity
     const char* GetName() const override { return "Native (Desktop)"; }
-    // Shown in the platform editor's framework picker. The editor used to
-    // hold these strings for the backends it shipped; a backend describes
-    // itself now, so one it has never heard of is not anonymous.
+    // Shown in the platform editor's framework picker. Each backend describes
+    // itself, so the editor needs no list of known backends.
     const char* GetIcon() const override { return ICON_TI_DEVICE_DESKTOP; }
     const char* GetDescription() const override
     {
@@ -88,7 +83,7 @@ private:
     static const char* HostPrebuiltKey();
     bool PrepareNativeDependencies(const std::string& projectPath, BuildOutputCallback outputCallback);
 
-    // Internal worker functions
+    // Run on the build thread.
     void DoBuild(const std::string& projectPath, BuildOutputCallback outputCallback,
                  BuildProgressCallback progressCallback);
     void DoClean(const std::string& projectPath, BuildOutputCallback outputCallback,
