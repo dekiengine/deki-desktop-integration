@@ -26,9 +26,9 @@
 #include <cstdio>
 #endif
 
-extern void DekiDesktopHAL_RegisterComponents();
-extern int DekiDesktopHAL_GetAutoComponentCount();
-extern const Deki::ComponentMeta* DekiDesktopHAL_GetAutoComponentMeta(int index);
+extern void DekiDesktopHALRegisterComponents();
+extern int DekiDesktopHALGetAutoComponentCount();
+extern const Deki::ComponentMeta* DekiDesktopHALGetAutoComponentMeta(int index);
 
 namespace DekiDesktop
 {
@@ -100,30 +100,30 @@ extern "C"
     /**
      * @brief Ensure deki-desktop-hal package is loaded and components are registered
      */
-    DEKI_DESKTOP_HAL_API int DekiDesktopHAL_EnsureRegistered(void)
+    DEKI_DESKTOP_HAL_API int DekiDesktopHALEnsureRegistered(void)
     {
         if (s_DesktopHALRegistered)
         {
-            return ::DekiDesktopHAL_GetAutoComponentCount();
+            return ::DekiDesktopHALGetAutoComponentCount();
         }
         s_DesktopHALRegistered = true;
 
         // Auto-generated: registers all Desktop HAL components with ComponentRegistry + ComponentFactory
-        ::DekiDesktopHAL_RegisterComponents();
+        ::DekiDesktopHALRegisterComponents();
 
-        return ::DekiDesktopHAL_GetAutoComponentCount();
+        return ::DekiDesktopHALGetAutoComponentCount();
     }
 
     // =============================================================================
     // Plugin metadata (for dynamic loading compatibility)
     // =============================================================================
 
-    DEKI_PLUGIN_API const char* DekiPlugin_GetName(void)
+    DEKI_PLUGIN_API const char* DekiPluginGetName(void)
     {
         return "Deki Desktop HAL Package";
     }
 
-    DEKI_PLUGIN_API const char* DekiPlugin_GetVersion(void)
+    DEKI_PLUGIN_API const char* DekiPluginGetVersion(void)
     {
 #ifdef DEKI_PACKAGE_VERSION
         return DEKI_PACKAGE_VERSION;
@@ -132,36 +132,36 @@ extern "C"
 #endif
     }
 
-    DEKI_PLUGIN_API int DekiPlugin_Init(void)
+    DEKI_PLUGIN_API int DekiPluginInit(void)
     {
         return 0;
     }
 
-    DEKI_PLUGIN_API void DekiPlugin_Shutdown(void)
+    DEKI_PLUGIN_API void DekiPluginShutdown(void)
     {
         s_DesktopHALRegistered = false;
     }
 
-    DEKI_PLUGIN_API int DekiPlugin_GetComponentCount(void)
+    DEKI_PLUGIN_API int DekiPluginGetComponentCount(void)
     {
-        return ::DekiDesktopHAL_GetAutoComponentCount();
+        return ::DekiDesktopHALGetAutoComponentCount();
     }
 
-    DEKI_PLUGIN_API const Deki::ComponentMeta* DekiPlugin_GetComponentMeta(int index)
+    DEKI_PLUGIN_API const Deki::ComponentMeta* DekiPluginGetComponentMeta(int index)
     {
-        return ::DekiDesktopHAL_GetAutoComponentMeta(index);
+        return ::DekiDesktopHALGetAutoComponentMeta(index);
     }
 
-    DEKI_PLUGIN_API void DekiPlugin_RegisterComponents(void)
+    DEKI_PLUGIN_API void DekiPluginRegisterComponents(void)
     {
-        DekiDesktopHAL_EnsureRegistered();
+        DekiDesktopHALEnsureRegistered();
     }
 
     // =============================================================================
     // Package-specific feature API (for linked DLL access without name conflicts)
     // =============================================================================
 
-    DEKI_DESKTOP_HAL_API const char* DekiDesktopHAL_GetName(void)
+    DEKI_DESKTOP_HAL_API const char* DekiDesktopHALGetName(void)
     {
         return "Desktop HAL";
     }

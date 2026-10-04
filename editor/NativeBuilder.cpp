@@ -992,15 +992,15 @@ bool NativeBuilder::GenerateCMakeLists(const std::string& projectPath, const std
     file << "    endforeach()\n";
     file << "endif()\n\n";
 
-    // Static registration init file (defines deki_register_project_packages(), which the
+    // Static registration init file (defines DekiRegisterProjectPackages(), which the
     // engine calls at startup) — same mechanism the firmware build uses for non-DLL targets.
     // Scan the project itself: two levels up from the build directory used to
     // be the project root and is generated/ now, which holds no packages, so
     // the init file came out empty and every scene component was "missing".
     const std::string& projRoot = projectPath;
     // engineDefinesSystemInit=true: the static sim links deki-engine-core's committed
-    // empty deki_init_package_systems() stub, so the init file inlines the package
-    // *_InitSystem() calls into deki_register_project_packages() instead of redefining
+    // empty DekiInitPackageSystems() stub, so the init file inlines the package
+    // *_InitSystem() calls into DekiRegisterProjectPackages() instead of redefining
     // that symbol (which would collide at link time).
     std::string packageInitName = fs::path(CMakeGen::GeneratePackageInitFile(buildDir, allPackages, activeIds,
                                                                              fs::path(GetSourceDirectory(projRoot)),
@@ -1317,32 +1317,32 @@ std::unique_ptr<IPlatformEditorUI> NativeBuilder::CreateEditorUI(const PlatformC
 
 extern "C"
 {
-    DEKI_BUILDER_API const DekiBuilderAbi* DekiBuilder_GetAbi(void)
+    DEKI_BUILDER_API const DekiBuilderAbi* DekiBuilderGetAbi(void)
     {
-        static const DekiBuilderAbi abi = DekiBuilder_ThisAbi((uint32_t)sizeof(DekiEditor::PlatformConfig),
+        static const DekiBuilderAbi kAbi = DekiBuilderThisAbi((uint32_t)sizeof(DekiEditor::PlatformConfig),
                                                               (uint32_t)sizeof(DekiEditor::CMakeGen::PackageEntry));
-        return &abi;
+        return &kAbi;
     }
 
-    DEKI_BUILDER_API const char* DekiBuilder_GetName(void)
+    DEKI_BUILDER_API const char* DekiBuilderGetName(void)
     {
         return "Native Builder";
     }
-    DEKI_BUILDER_API const char* DekiBuilder_GetVersion(void)
+    DEKI_BUILDER_API const char* DekiBuilderGetVersion(void)
     {
         return "1.0.0";
     }
-    DEKI_BUILDER_API int DekiBuilder_GetBuilderCount(void)
+    DEKI_BUILDER_API int DekiBuilderGetBuilderCount(void)
     {
         return 1;
     }
 
-    DEKI_BUILDER_API DekiEditor::ITargetBuilder* DekiBuilder_CreateBuilder(int index)
+    DEKI_BUILDER_API DekiEditor::ITargetBuilder* DekiBuilderCreateBuilder(int index)
     {
         return index == 0 ? new DekiEditor::NativeBuilder() : nullptr;
     }
 
-    DEKI_BUILDER_API void DekiBuilder_DestroyBuilder(DekiEditor::ITargetBuilder* builder)
+    DEKI_BUILDER_API void DekiBuilderDestroyBuilder(DekiEditor::ITargetBuilder* builder)
     {
         delete builder;  // in THIS module: its vtable and operator delete live here
     }

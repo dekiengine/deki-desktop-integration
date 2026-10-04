@@ -67,35 +67,35 @@ IFileSystem::FileHandle DesktopFileSystem::OpenFile(const char* path, OpenMode m
         return nullptr;
     }
 
-    std::string real_path = ConvertPathInternal(path);
-    const char* mode_str = "";
-    bool is_write = false;
+    std::string realPath = ConvertPathInternal(path);
+    const char* modeStr = "";
+    bool isWrite = false;
 
     switch (mode)
     {
-        case OpenMode::READ_BINARY: mode_str = "rb"; break;
-        case OpenMode::WRITE_BINARY:
-            mode_str = "wb";
-            is_write = true;
+        case OpenMode::ReadBinary: modeStr = "rb"; break;
+        case OpenMode::WriteBinary:
+            modeStr = "wb";
+            isWrite = true;
             break;
-        case OpenMode::READ_TEXT: mode_str = "r"; break;
-        case OpenMode::WRITE_TEXT:
-            mode_str = "w";
-            is_write = true;
+        case OpenMode::ReadText: modeStr = "r"; break;
+        case OpenMode::WriteText:
+            modeStr = "w";
+            isWrite = true;
             break;
     }
 
-    if (is_write)
+    if (isWrite)
     {
         std::error_code ec;
-        std::filesystem::path parent = std::filesystem::path(real_path).parent_path();
+        std::filesystem::path parent = std::filesystem::path(realPath).parent_path();
         if (!parent.empty())
         {
             std::filesystem::create_directories(parent, ec);
         }
     }
 
-    FILE* file = fopen(real_path.c_str(), mode_str);
+    FILE* file = fopen(realPath.c_str(), modeStr);
     return static_cast<FileHandle>(file);
 }
 
@@ -135,9 +135,9 @@ long DesktopFileSystem::SeekFile(FileHandle handle, long offset, SeekOrigin orig
     int whence = SEEK_SET;
     switch (origin)
     {
-        case SeekOrigin::BEGIN: whence = SEEK_SET; break;
-        case SeekOrigin::CURRENT: whence = SEEK_CUR; break;
-        case SeekOrigin::END: whence = SEEK_END; break;
+        case SeekOrigin::Begin: whence = SEEK_SET; break;
+        case SeekOrigin::Current: whence = SEEK_CUR; break;
+        case SeekOrigin::End: whence = SEEK_END; break;
     }
 
     if (fseek(static_cast<FILE*>(handle), offset, whence) == 0)
@@ -164,7 +164,7 @@ long DesktopFileSystem::GetFileSize(FileHandle handle)
     }
 
     FILE* file = static_cast<FILE*>(handle);
-    long current_pos = ftell(file);
+    long currentPos = ftell(file);
 
     if (fseek(file, 0, SEEK_END) != 0)
     {
@@ -174,7 +174,7 @@ long DesktopFileSystem::GetFileSize(FileHandle handle)
     long size = ftell(file);
 
     // Restore original position
-    fseek(file, current_pos, SEEK_SET);
+    fseek(file, currentPos, SEEK_SET);
 
     return size;
 }
@@ -186,8 +186,8 @@ bool DesktopFileSystem::FileExists(const char* path)
         return false;
     }
 
-    std::string real_path = ConvertPathInternal(path);
-    FILE* file = fopen(real_path.c_str(), "rb");
+    std::string realPath = ConvertPathInternal(path);
+    FILE* file = fopen(realPath.c_str(), "rb");
 
     if (file)
     {
