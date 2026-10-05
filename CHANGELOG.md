@@ -19,6 +19,7 @@ alongside one that has them.
 - The functions the editor finds by name are PascalCase: DekiDesktopHALRegisterComponents, DekiDesktopHALGetAutoComponentCount, DekiDesktopHALEnsureRegistered and the rest. Built against engine ABI 21; a build of this package from before does not load and is rebuilt.
 
 ### Fixed
+- A build picks up package source files added after it was first configured.
 - A failed build on Linux or macOS reports the build's exit code. It reported
   the raw wait status, so a build that exited 2 said "exit code 512".
 

@@ -837,7 +837,7 @@ bool NativeBuilder::GenerateCMakeLists(const std::string& projectPath, const std
     file << "set(_RC_PKG_TAGS \"\")\n";
     file << "set(_RC_PKG_PREFIXES \"\")\n";
     file << "set(_RC_PKG_OUTDIRS \"\")\n";
-    file << "file(GLOB PACKAGE_CMAKE_FILES \"${DEKI_PROJECT_ROOT}/packages/*/package.cmake\")\n";
+    file << "file(GLOB PACKAGE_CMAKE_FILES CONFIGURE_DEPENDS \"${DEKI_PROJECT_ROOT}/packages/*/package.cmake\")\n";
     file << "foreach(PACKAGE_CMAKE ${PACKAGE_CMAKE_FILES})\n";
     file << "    get_filename_component(PACKAGE_DIR \"${PACKAGE_CMAKE}\" DIRECTORY)\n";
     file << "    unset(PACKAGE_CORE_SOURCES)\n";
@@ -860,7 +860,7 @@ bool NativeBuilder::GenerateCMakeLists(const std::string& projectPath, const std
     file << "            set(_ENTRY_PATH \"\")\n";
     file << "        endif()\n";
     file << "    endif()\n";
-    file << "    file(GLOB_RECURSE _MOD_SRCS \"${PACKAGE_DIR}/*.cpp\" \"${PACKAGE_DIR}/*.c\")\n";
+    file << "    file(GLOB_RECURSE _MOD_SRCS CONFIGURE_DEPENDS \"${PACKAGE_DIR}/*.cpp\" \"${PACKAGE_DIR}/*.c\")\n";
     file << "    foreach(SRC ${_MOD_SRCS})\n";
     file << "        string(FIND \"${SRC}\" \"/editor/\" _IS_EDITOR)\n";
     file << "        string(FIND \"${SRC}\" \"/tests/\" _IS_TESTS)\n";
