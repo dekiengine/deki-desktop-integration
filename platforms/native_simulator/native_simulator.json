@@ -9,11 +9,13 @@
     "DEBUG",
     "DEKI_LOG_ENABLED"
   ],
-  "displayBus": "SOFTWARE",
-  "displayDriver": "SDL3",
   "displayName": "Desktop Simulator (SDL3)",
   "family": "native",
   "framework": "native",
+  "frameworkOptions": {
+    "displayBus": "SOFTWARE",
+    "displayDriver": "SDL3"
+  },
   "id": "native_simulator",
   "provides": [
     "desktop-os",
