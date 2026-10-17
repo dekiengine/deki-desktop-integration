@@ -1,0 +1,14 @@
+{
+    "C Flags": "C 플래그",
+    "C++ Compiler (GCC / Clang)": "C++ 컴파일러 (GCC / Clang)",
+    "C++ Compiler (Visual Studio / MinGW)": "C++ 컴파일러 (Visual Studio / MinGW)",
+    "C++ Flags": "C++ 플래그",
+    "Compiler & Build": "컴파일러 및 빌드",
+    "Display": "디스플레이",
+    "Install a C++ compiler to build native targets": "네이티브 타겟을 빌드하려면 C++ 컴파일러를 설치하세요",
+    "Install CMake from cmake.org": "cmake.org에서 CMake를 설치하세요",
+    "Linker Flags": "링커 플래그",
+    "Preprocessor Defines": "전처리기 정의",
+    "Resolution": "해상도",
+    "Run your project on this desktop, through the SDL3 simulator": "SDL3 시뮬레이터를 통해 이 데스크톱에서 프로젝트를 실행합니다"
+}

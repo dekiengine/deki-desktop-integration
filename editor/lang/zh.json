@@ -1,0 +1,14 @@
+{
+    "C Flags": "C 标志",
+    "C++ Compiler (GCC / Clang)": "C++ 编译器 (GCC / Clang)",
+    "C++ Compiler (Visual Studio / MinGW)": "C++ 编译器 (Visual Studio / MinGW)",
+    "C++ Flags": "C++ 标志",
+    "Compiler & Build": "编译器与构建",
+    "Display": "显示屏",
+    "Install a C++ compiler to build native targets": "安装 C++ 编译器以构建本机目标",
+    "Install CMake from cmake.org": "从 cmake.org 安装 CMake",
+    "Linker Flags": "链接器标志",
+    "Preprocessor Defines": "预处理器定义",
+    "Resolution": "分辨率",
+    "Run your project on this desktop, through the SDL3 simulator": "通过 SDL3 模拟器在这台电脑上运行项目"
+}
