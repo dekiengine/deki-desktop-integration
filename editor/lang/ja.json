@@ -1,0 +1,14 @@
+{
+    "C Flags": "C フラグ",
+    "C++ Compiler (GCC / Clang)": "C++ コンパイラー (GCC / Clang)",
+    "C++ Compiler (Visual Studio / MinGW)": "C++ コンパイラー (Visual Studio / MinGW)",
+    "C++ Flags": "C++ フラグ",
+    "Compiler & Build": "コンパイラーとビルド",
+    "Display": "ディスプレイ",
+    "Install a C++ compiler to build native targets": "ネイティブのターゲットをビルドするには C++ コンパイラーをインストールしてください",
+    "Install CMake from cmake.org": "cmake.org から CMake をインストールしてください",
+    "Linker Flags": "リンカーフラグ",
+    "Preprocessor Defines": "プリプロセッサー定義",
+    "Resolution": "解像度",
+    "Run your project on this desktop, through the SDL3 simulator": "SDL3 シミュレーターを使って、このデスクトップでプロジェクトを実行します"
+}

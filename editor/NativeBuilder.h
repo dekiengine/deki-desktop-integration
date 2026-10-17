@@ -1,6 +1,7 @@
 #pragma once
 
 #include <deki-editor/IconsTabler.h>
+#include <deki-editor/Localization.h>
 
 #include <deki-editor/build/FirmwareBuilderBase.h>
 #include "NativeToolchain.h"
@@ -50,7 +51,7 @@ public:
     const char* GetIcon() const override { return ICON_TI_DEVICE_DESKTOP; }
     const char* GetDescription() const override
     {
-        return "Run your project on this desktop, through the SDL3 simulator";
+        return TrMark("Run your project on this desktop, through the SDL3 simulator");
     }
 
     std::string GetFrameworkId() const override { return "native"; }

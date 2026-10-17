@@ -1,4 +1,5 @@
 #include "NativeToolchain.h"
+#include <deki-editor/Localization.h>
 #include <deki-editor/ShellCommand.h>
 #include <filesystem>
 #include <algorithm>
@@ -317,13 +318,13 @@ std::vector<ToolchainComponent> NativeToolchain::GetComponents() const
         ToolchainComponent comp;
         comp.id = "compiler";
 #ifdef _WIN32
-        comp.displayName = "C++ Compiler (Visual Studio / MinGW)";
+        comp.displayName = TrMark("C++ Compiler (Visual Studio / MinGW)");
 #else
-        comp.displayName = "C++ Compiler (GCC / Clang)";
+        comp.displayName = TrMark("C++ Compiler (GCC / Clang)");
 #endif
         comp.status = ToolchainComponentStatus::NotInstalled;
         comp.canInstall = false;
-        comp.tooltip = "Install a C++ compiler to build native targets";
+        comp.tooltip = TrMark("Install a C++ compiler to build native targets");
         components.push_back(comp);
     }
 
@@ -335,7 +336,7 @@ std::vector<ToolchainComponent> NativeToolchain::GetComponents() const
         comp.status =
             m_CMakePath.empty() ? ToolchainComponentStatus::NotInstalled : ToolchainComponentStatus::Installed;
         comp.canInstall = false;
-        comp.tooltip = m_CMakePath.empty() ? "Install CMake from cmake.org" : m_CMakePath;
+        comp.tooltip = m_CMakePath.empty() ? TrMark("Install CMake from cmake.org") : m_CMakePath;
         components.push_back(comp);
     }
 

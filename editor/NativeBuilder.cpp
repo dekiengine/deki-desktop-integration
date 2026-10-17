@@ -2,6 +2,7 @@
 #include <deki-editor/build/BuilderWidgets.h>
 #include <deki-editor/EditorTheme.h>
 #include <deki-editor/EditorUI.h>
+#include <deki-editor/Localization.h>
 #include <deki/LogSystem.h>
 #include <deki-editor/SafeNames.h>
 #include <deki-editor/EditorHttpUtils.h>
@@ -1243,10 +1244,10 @@ public:
         // --- Compiler & Build ---
         if (DekiEditor::SchematicSectionBegin("Compiler & Build", 0))
         {
-            DrawStringListEditor("Preprocessor Defines", m_Defines, m_NewDefineBuf, sizeof(m_NewDefineBuf));
-            DrawStringListEditor("C Flags", m_CFlags, m_NewCFlagBuf, sizeof(m_NewCFlagBuf));
-            DrawStringListEditor("C++ Flags", m_CxxFlags, m_NewCxxFlagBuf, sizeof(m_NewCxxFlagBuf));
-            DrawStringListEditor("Linker Flags", m_LinkFlags, m_NewLinkFlagBuf, sizeof(m_NewLinkFlagBuf));
+            DrawStringListEditor(TrMark("Preprocessor Defines"), m_Defines, m_NewDefineBuf, sizeof(m_NewDefineBuf));
+            DrawStringListEditor(TrMark("C Flags"), m_CFlags, m_NewCFlagBuf, sizeof(m_NewCFlagBuf));
+            DrawStringListEditor(TrMark("C++ Flags"), m_CxxFlags, m_NewCxxFlagBuf, sizeof(m_NewCxxFlagBuf));
+            DrawStringListEditor(TrMark("Linker Flags"), m_LinkFlags, m_NewLinkFlagBuf, sizeof(m_NewLinkFlagBuf));
             DekiEditor::SchematicSectionEnd();
         }
     }
