@@ -25,12 +25,13 @@
 var NAVTREE =
 [
   [ "deki-desktop-integration", "index.html", [
-    [ "Changelog", "index.html#autotoc_md0", [
-      [ "Unreleased", "index.html#autotoc_md1", null ],
-      [ "Changed", "index.html#autotoc_md2", null ],
-      [ "0.16.0", "index.html#autotoc_md3", null ],
-      [ "Fixed", "index.html#autotoc_md4", null ],
-      [ "Changed", "index.html#autotoc_md5", null ]
+    [ "Changelog", "index.html#changelog", [
+      [ "0.19.0", "index.html#autotoc_md0", null ],
+      [ "Changed", "index.html#autotoc_md1", null ],
+      [ "Added", "index.html#autotoc_md2", null ],
+      [ "0.18.0", "index.html#autotoc_md3", null ],
+      [ "Changed", "index.html#autotoc_md4", null ],
+      [ "Fixed", "index.html#autotoc_md5", null ]
     ] ]
   ] ]
 ];
