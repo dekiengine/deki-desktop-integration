@@ -6,6 +6,11 @@
 /// Desktop file system on the C standard library. Maps the device's virtual
 /// mounts to local folders. Used on Windows, Linux and macOS, in both editor
 /// and simulator builds.
+///
+/// F:/ is the board's flash, as on a device: the game's data (the build's
+/// export, in ./flash/) is read and never written, and the files the game
+/// writes go to ./userdata/, read from there when the game's data has no file
+/// of that name.
 
 namespace Deki
 {
@@ -13,13 +18,19 @@ namespace Deki
 class DesktopFileSystem : public IFileSystem
 {
 private:
-    std::string m_BasePath;   // "S:/" (SD card) -> exported assets
-    std::string m_FlashPath;  // "F:/" (flash)   -> boot scene + project settings
+    std::string m_BasePath;      // "S:/" (SD card) -> exported assets
+    std::string m_FlashPath;     // "F:/" (flash)   -> the game's data: boot scene, settings, assets
+    std::string m_UserDataPath;  // "F:/" files the game writes
     bool m_Initialized;
 
     /// Turns a virtual path ("S:/assets/texture.bin", "F:/boot.scene") into a
-    /// real filesystem path.
+    /// real filesystem path. An F:/ path is the game's data when that has the
+    /// file, else the user data.
     std::string ConvertPathInternal(const char* virtualPath);
+
+    /// True when `virtualPath` names a file of the game's data (F:/ in
+    /// ./flash/), which is never written.
+    bool IsGameData(const char* virtualPath) const;
 
 public:
     DesktopFileSystem();

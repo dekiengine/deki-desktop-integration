@@ -8,6 +8,14 @@ breaking change bumps the minor across the editor, the engine and every
 package together, so a package with no changes of its own is still released
 alongside one that has them.
 
+## Unreleased
+
+### Changed
+- `F:/` works as on a board: the game's data (`./flash/`) is read and never
+  written, and files the game writes under `F:/` go to `./userdata/`, read from
+  there when the game's data has no file of that name. Before, a game could
+  overwrite its own exported files.
+
 ## 0.19.0
 
 ### Changed

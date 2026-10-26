@@ -1,4 +1,5 @@
 #include "DesktopFileSystem.h"
+#include <deki/LogSystem.h>
 #include <cstdio>
 #include <cstring>
 #include <algorithm>
@@ -27,9 +28,11 @@ bool DesktopFileSystem::Initialize()
     // Paths are relative to the working directory. The simulator mirrors the
     // device's two storage mounts:
     //   "S:/" (SD card) -> "./storage/"  (exported/packed assets)
-    //   "F:/" (flash)   -> "./flash/"    (boot scene + project settings, from the SPIFFS export)
+    //   "F:/" (flash)   -> "./flash/"    (the game's data, from the build's export)
+    //                      "./userdata/" (what the game writes, kept across builds)
     m_BasePath = "./storage/";
     m_FlashPath = "./flash/";
+    m_UserDataPath = "./userdata/";
     m_Initialized = true;
     return true;
 }
@@ -52,12 +55,24 @@ std::string DesktopFileSystem::ConvertPathInternal(const char* virtualPath)
     {
         path = m_BasePath + path.substr(3);
     }
-    // "F:/..." -> "./flash/..." (flash mount)
+    // "F:/..." -> "./flash/..." (the game's data), else "./userdata/..."
     else if (path.length() >= 3 && path.substr(0, 3) == "F:/")
     {
-        path = m_FlashPath + path.substr(3);
+        const std::string inFlash = m_FlashPath + path.substr(3);
+        std::error_code ec;
+        path = std::filesystem::is_regular_file(inFlash, ec) ? inFlash : m_UserDataPath + path.substr(3);
     }
     return path;
+}
+
+bool DesktopFileSystem::IsGameData(const char* virtualPath) const
+{
+    if (std::strncmp(virtualPath, "F:/", 3) != 0)
+    {
+        return false;
+    }
+    std::error_code ec;
+    return std::filesystem::is_regular_file(m_FlashPath + (virtualPath + 3), ec);
 }
 
 IFileSystem::FileHandle DesktopFileSystem::OpenFile(const char* path, OpenMode mode)
@@ -83,6 +98,16 @@ IFileSystem::FileHandle DesktopFileSystem::OpenFile(const char* path, OpenMode m
             modeStr = "w";
             isWrite = true;
             break;
+    }
+
+    if (isWrite && IsGameData(path))
+    {
+        // As on a board: the game's data is what was flashed, the same every
+        // run.
+        DEKI_LOG_WARNING("%s is part of the game's data, which is never written; write the game's own files "
+                         "under another name",
+                         path);
+        return nullptr;
     }
 
     if (isWrite)

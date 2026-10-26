@@ -1,7 +1,7 @@
 // DesktopFileSystem: the device's mounts mapped to folders beside the
-// simulator ("S:/" to ./storage/, "F:/" to ./flash/), and the file calls on
-// top. The same asset path has to reach the same bytes on a board, in the
-// simulator and in the editor, so the mapping is pinned here.
+// simulator ("S:/" to ./storage/, "F:/" to ./flash/ for the game's data and
+// ./userdata/ for what the game writes), and the file calls on top. The same asset path has to reach the same bytes on
+// a board, in the simulator and in the editor, so the mapping is pinned here.
 //
 // Each test runs in a fresh temporary working directory, since the mounts are
 // relative to it.
@@ -69,8 +69,10 @@ private:
 
 TEST_F(DesktopFileSystemTest, MountsMapToFoldersBesideTheSimulator)
 {
+    WriteRaw("flash/boot.scene", "flash");
     EXPECT_EQ(Convert("S:/assets/tex.bin"), "./storage/assets/tex.bin");
-    EXPECT_EQ(Convert("F:/boot.scene"), "./flash/boot.scene");
+    EXPECT_EQ(Convert("F:/boot.scene"), "./flash/boot.scene");  // the game's data
+    EXPECT_EQ(Convert("F:/save.bin"), "./userdata/save.bin");   // anything else
 }
 
 TEST_F(DesktopFileSystemTest, OtherPathsPassThrough)
@@ -83,14 +85,14 @@ TEST_F(DesktopFileSystemTest, OtherPathsPassThrough)
 
 TEST_F(DesktopFileSystemTest, ConvertPathNeedsRoomForTheTerminator)
 {
-    // "./flash/a" is 9 characters: a 10-byte buffer fits it, 9 does not.
-    char out[10];
-    EXPECT_TRUE(fsys.ConvertPath("F:/a", out, 10));
-    EXPECT_STREQ(out, "./flash/a");
-    EXPECT_FALSE(fsys.ConvertPath("F:/a", out, 9));
+    // "./storage/a" is 11 characters: a 12-byte buffer fits it, 11 does not.
+    char out[12];
+    EXPECT_TRUE(fsys.ConvertPath("S:/a", out, 12));
+    EXPECT_STREQ(out, "./storage/a");
+    EXPECT_FALSE(fsys.ConvertPath("S:/a", out, 11));
     EXPECT_FALSE(fsys.ConvertPath("F:/a", out, 0));
-    EXPECT_FALSE(fsys.ConvertPath(nullptr, out, 10));
-    EXPECT_FALSE(fsys.ConvertPath("F:/a", nullptr, 10));
+    EXPECT_FALSE(fsys.ConvertPath(nullptr, out, 12));
+    EXPECT_FALSE(fsys.ConvertPath("F:/a", nullptr, 12));
 }
 
 TEST_F(DesktopFileSystemTest, AMountedPathReadsTheFileInItsFolder)
@@ -107,6 +109,50 @@ TEST_F(DesktopFileSystemTest, AMountedPathReadsTheFileInItsFolder)
 
     EXPECT_TRUE(fsys.FileExists("F:/boot.scene"));
     EXPECT_FALSE(fsys.FileExists("S:/boot.scene"));
+}
+
+// --- What the game writes ---
+
+TEST_F(DesktopFileSystemTest, TheGameWritesItsOwnFilesBesideItsData)
+{
+    WriteRaw("flash/boot.scene", "flash");
+    auto h = fsys.OpenFile("F:/saves/slot1.dat", IFileSystem::OpenMode::WriteBinary);
+    ASSERT_NE(h, nullptr);
+    EXPECT_EQ(fsys.WriteFile(h, "level 3", 7), 7u);
+    fsys.CloseFile(h);
+    EXPECT_TRUE(fs::exists("userdata/saves/slot1.dat"));
+    EXPECT_FALSE(fs::exists("flash/saves"));
+
+    char buf[16] = {};
+    h = fsys.OpenFile("F:/saves/slot1.dat", IFileSystem::OpenMode::ReadBinary);
+    ASSERT_NE(h, nullptr);
+    EXPECT_EQ(fsys.ReadFile(h, buf, sizeof(buf)), 7u);
+    EXPECT_STREQ(buf, "level 3");
+    fsys.CloseFile(h);
+    EXPECT_TRUE(fsys.FileExists("F:/saves/slot1.dat"));
+}
+
+TEST_F(DesktopFileSystemTest, TheGamesDataIsNeverWritten)
+{
+    WriteRaw("flash/boot.scene", "flash");
+    EXPECT_EQ(fsys.OpenFile("F:/boot.scene", IFileSystem::OpenMode::WriteBinary), nullptr);
+    EXPECT_EQ(fsys.OpenFile("F:/boot.scene", IFileSystem::OpenMode::WriteText), nullptr);
+    std::ifstream in("flash/boot.scene", std::ios::binary);
+    std::string text((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+    EXPECT_EQ(text, "flash");
+    EXPECT_FALSE(fs::exists("userdata/boot.scene"));
+}
+
+TEST_F(DesktopFileSystemTest, TheGamesDataComesFirst)
+{
+    WriteRaw("flash/boot.scene", "flash");
+    WriteRaw("userdata/boot.scene", "stale");
+    char buf[16] = {};
+    auto h = fsys.OpenFile("F:/boot.scene", IFileSystem::OpenMode::ReadBinary);
+    ASSERT_NE(h, nullptr);
+    fsys.ReadFile(h, buf, sizeof(buf));
+    fsys.CloseFile(h);
+    EXPECT_STREQ(buf, "flash");
 }
 
 // --- Files ---
