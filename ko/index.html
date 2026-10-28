@@ -57,7 +57,7 @@
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">deki-desktop-integration<span id="projectnumber">&#160;0.20.2</span>
+   <div id="projectname">deki-desktop-integration<span id="projectnumber">&#160;0.21.0</span>
    </div>
    <div id="projectbrief">Deki 패키지 레퍼런스</div>
   </td>
@@ -115,7 +115,7 @@ document.addEventListener('DOMContentLoaded',() => { initNavTree('index.html',''
 <img src="deki-desktop-integration.png" alt=""/>
 </div>
     <p>데스크톱 플랫폼 HAL: 데스크톱 빌드를 위한 메모리 및 파일 시스템 프로바이더.</p>
-<p>저장소: <a href="https://github.com/dekiengine/deki-desktop-integration">github.com/dekiengine/deki-desktop-integration</a> · 최신 릴리스: 0.19.0 · 엔진 0.19.0 이상 필요</p>
+<p>저장소: <a href="https://github.com/dekiengine/deki-desktop-integration">github.com/dekiengine/deki-desktop-integration</a> · 최신 릴리스: 0.21.0 · 엔진 0.19.0 이상 필요</p>
 <p><span class="tt">DekiEditor --packages-add deki-desktop-integration &lt;project&gt;</span> 또는 패키지 관리자로 설치합니다. 엔진 자체의 컴포넌트와 C++ API는 <a href="https://dekiengine.github.io/docs/ko/">Deki 문서</a>에 있습니다.</p>
 <p>에디터에는 <b>Desktop Integration</b>(으)로 표시됩니다.</p>
 <p>이 패키지는 엔진이 호출하는 드라이버 또는 라이브러리입니다. 자세한 내용은 README를 참고하세요.</p>
@@ -123,38 +123,28 @@ document.addEventListener('DOMContentLoaded',() => { initNavTree('index.html',''
 변경 내역</h1>
 <p>변경 내역은 영어로 되어 있습니다.</p>
 <h2 class="doxsection"><a class="anchor" id="autotoc_md0"></a>
-0.19.0</h2>
+0.21.0</h2>
 <h2 class="doxsection"><a class="anchor" id="autotoc_md1"></a>
+Changed</h2>
+<ul>
+<li><span class="tt">F:/</span> works as on a board: the game's data (<span class="tt">./flash/</span>) is read and never written, and files the game writes under <span class="tt">F:/</span> go to <span class="tt">./userdata/</span>, read from there when the game's data has no file of that name. Before, a game could overwrite its own exported files.</li>
+</ul>
+<h2 class="doxsection"><a class="anchor" id="autotoc_md2"></a>
+0.19.0</h2>
+<h2 class="doxsection"><a class="anchor" id="autotoc_md3"></a>
 Changed</h2>
 <ul>
 <li><span class="tt">minEngine</span> 0.19.0: built against engine 0.19.0, whose component metadata records the package each class is in. A build of this package from before does not load and is rebuilt.</li>
 </ul>
-<h2 class="doxsection"><a class="anchor" id="autotoc_md2"></a>
+<h2 class="doxsection"><a class="anchor" id="autotoc_md4"></a>
 Added</h2>
 <ul>
 <li>Japanese, Simplified Chinese and Korean: <span class="tt">editor/lang/ja.json</span>, <span class="tt">zh.json</span> and <span class="tt">ko.json</span> translate the names, tooltips and enum values this package's components show in the Inspector.</li>
 <li>The package's editor text goes through the editor's translation (<span class="tt">Tr</span>), so it shows in the editor's language. Needs the editor release that adds <span class="tt">Localization.h</span>; raise <span class="tt">minEngine</span> to it when releasing.</li>
 </ul>
-<h2 class="doxsection"><a class="anchor" id="autotoc_md3"></a>
-0.18.0</h2>
-<h2 class="doxsection"><a class="anchor" id="autotoc_md4"></a>
-Changed</h2>
-<ul>
-<li><span class="tt">minEngine</span> 0.18.0. Reflection ABI 21: the package must be rebuilt.</li>
-<li>The boot scenes are saved in the current scene format, as the editor writes them, so an adopted board matches its package copy.</li>
-<li>The desktop board template keeps <span class="tt">displayBus</span> and <span class="tt">displayDriver</span> in <span class="tt">frameworkOptions</span>, as the editor saves them.</li>
-<li><b>Names follow the code style</b> (deki-engine/docs/codestyle): types, functions and enum values are PascalCase, constants kPascalCase, members m_PascalCase, locals and parameters camelCase. The code is formatted with clang-format 22.</li>
-<li>The functions the editor finds by name are PascalCase: DekiDesktopHALRegisterComponents, DekiDesktopHALGetAutoComponentCount, DekiDesktopHALEnsureRegistered and the rest. Built against engine ABI 21; a build of this package from before does not load and is rebuilt.</li>
-</ul>
-<h2 class="doxsection"><a class="anchor" id="autotoc_md5"></a>
-Fixed</h2>
-<ul>
-<li>A build picks up package source files added after it was first configured.</li>
-<li>A failed build on Linux or macOS reports the build's exit code. It reported the raw wait status, so a build that exited 2 said "exit code 512".</li>
-</ul>
 <p>이전 릴리스: <a href="https://github.com/dekiengine/deki-desktop-integration/blob/master/CHANGELOG.md">CHANGELOG.md</a></p>
 <hr  />
-<p>패키지의 리플렉션 데이터에서 생성했습니다(엔진 0.20.2). 속성 이름은 씬 파일에서 쓰는 키입니다. 이름을 바꿔도 별칭이 유지됩니다(<a href="https://github.com/dekiengine/deki-editor/blob/master/COMPATIBILITY.md">호환성</a>). </p>
+<p>패키지의 리플렉션 데이터에서 생성했습니다(엔진 0.21.0). 속성 이름은 씬 파일에서 쓰는 키입니다. 이름을 바꿔도 별칭이 유지됩니다(<a href="https://github.com/dekiengine/deki-editor/blob/master/COMPATIBILITY.md">호환성</a>). </p>
 </div></div><!-- PageDoc -->
 <a href="doxygen_crawl.html"></a>
 </div><!-- contents -->
