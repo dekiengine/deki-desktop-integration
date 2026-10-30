@@ -10,6 +10,11 @@ alongside one that has them.
 
 ## Unreleased
 
+### Added
+- Desktop games on Windows have the Deki cat as their icon. A package's
+  `resources/windows/*.rc` files are compiled into a Windows game; this
+  package's gives the icon.
+
 ### Changed
 - Desktop games no longer link OpenGL: the SDL3 package draws with SDL's GPU
   API.

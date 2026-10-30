@@ -669,7 +669,12 @@ bool NativeBuilder::GenerateCMakeLists(const std::string& projectPath, const std
     file << "# Platform: " << config.displayName << " (Native Desktop)\n\n";
 
     file << "cmake_minimum_required(VERSION 3.16)\n";
-    file << "project(DekiGame LANGUAGES C CXX)\n\n";
+    file << "project(DekiGame LANGUAGES C CXX)\n";
+    // Windows resources (packages' resources/windows/*.rc) need the resource
+    // compiler. MSVC enables it with C and C++ already.
+    file << "if(WIN32 AND NOT MSVC)\n";
+    file << "    enable_language(RC)\n";
+    file << "endif()\n\n";
 
     // The project's own layout: src/ and packages/ under its root. This file
     // is rewritten on every build, so an absolute root is safe.
@@ -878,6 +883,13 @@ bool NativeBuilder::GenerateCMakeLists(const std::string& projectPath, const std
     file << "            list(APPEND _ALL_PACKAGE_SOURCES \"${SRC}\")\n";
     file << "        endif()\n";
     file << "    endforeach()\n";
+    // Windows resources a package ships (resources/windows/*.rc), such as this
+    // package's app icon. Resource ids are shared by the whole exe, so only
+    // one package may give the icon.
+    file << "    if(WIN32)\n";
+    file << "        file(GLOB _MOD_RC CONFIGURE_DEPENDS \"${PACKAGE_DIR}/resources/windows/*.rc\")\n";
+    file << "        list(APPEND _ALL_PACKAGE_SOURCES ${_MOD_RC})\n";
+    file << "    endif()\n";
     file << "    list(APPEND PACKAGE_INCLUDE_DIRS \"${PACKAGE_DIR}\")\n";
     // Codegen inputs, collected in the same pass. Output goes under this build
     // folder, not into the package, so the editor and firmware builds cannot

@@ -1,0 +1,4 @@
+// Windows resources of a desktop game: the app icon, the Deki cat (made by the
+// editor's tools/make-app-icon.py). Explorer and the taskbar show the first
+// icon, and SDL gives it to the game's window.
+1 ICON "deki.ico"
