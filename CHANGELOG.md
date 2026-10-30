@@ -8,6 +8,12 @@ breaking change bumps the minor across the editor, the engine and every
 package together, so a package with no changes of its own is still released
 alongside one that has them.
 
+## Unreleased
+
+### Changed
+- Desktop games no longer link OpenGL: the SDL3 package draws with SDL's GPU
+  API.
+
 ## 0.21.0
 
 ### Changed

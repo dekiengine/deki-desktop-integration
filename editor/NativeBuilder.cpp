@@ -756,8 +756,6 @@ bool NativeBuilder::GenerateCMakeLists(const std::string& projectPath, const std
         file << "set(DEKI_SDL3_INCLUDE \"\")\n\n";
     }
 
-    file << "find_package(OpenGL REQUIRED)\n\n";
-
     // The engine as a subdirectory: a static library without DEKI_EDITOR.
     file << "# Engine (static library, non-editor mode)\n";
     file << "set(DEKI_TRANSFORM_2D " << (transformWidth != CMakeGen::TransformWidth::None ? "ON" : "OFF")
@@ -767,8 +765,8 @@ bool NativeBuilder::GenerateCMakeLists(const std::string& projectPath, const std
     file << "message(STATUS \"Deki transform: " << CMakeGen::EscapeCMakeString(transformWhy) << "\")\n";
     file << "add_subdirectory(\"${DEKI_ENGINE_PATH}\" \"${CMAKE_BINARY_DIR}/deki-engine\")\n\n";
 
-    // The engine links SDL3 and OpenGL, which the SDL3 package needs.
-    file << "target_link_libraries(deki-engine-core PUBLIC ${DEKI_SDL3_TARGET} OpenGL::GL)\n\n";
+    // The engine links SDL3, which the SDL3 package needs.
+    file << "target_link_libraries(deki-engine-core PUBLIC ${DEKI_SDL3_TARGET})\n\n";
 
     // What the engine has to be told about its target, taken from the
     // platform. The engine's CMake must not hard-code it: it would build at
@@ -1032,9 +1030,8 @@ bool NativeBuilder::GenerateCMakeLists(const std::string& projectPath, const std
     file << "    \"${DEKI_PROJECT_ROOT}/src\"\n";
     file << ")\n\n";
 
-    // Link deki-engine-core, SDL3, OpenGL and the system libs packages declare (such as winhttp).
-    file << "target_link_libraries(DekiGame PRIVATE deki-engine-core ${DEKI_SDL3_TARGET} OpenGL::GL "
-            "${_ALL_SYSTEM_LIBS})\n\n";
+    // Link deki-engine-core, SDL3 and the system libs packages declare (such as winhttp).
+    file << "target_link_libraries(DekiGame PRIVATE deki-engine-core ${DEKI_SDL3_TARGET} ${_ALL_SYSTEM_LIBS})\n\n";
 
     // A prebuilt SDL3 is a DLL; it has to sit next to the exe.
     file << "if(TARGET SDL3::SDL3-shared)\n";
