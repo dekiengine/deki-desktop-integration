@@ -8,7 +8,7 @@ breaking change bumps the minor across the editor, the engine and every
 package together, so a package with no changes of its own is still released
 alongside one that has them.
 
-## Unreleased
+## 0.22.0
 
 ### Added
 - Desktop games on Windows have the Deki cat as their icon. A package's
@@ -20,6 +20,8 @@ alongside one that has them.
   API.
 - Desktop builds run at below-normal priority and with as many compile jobs
   as free memory holds (needs editor 0.22).
+- `minEngine` 0.22.0: built against engine 0.22.0. A build of this package
+  from before does not load and is rebuilt.
 
 ## 0.21.0
 
