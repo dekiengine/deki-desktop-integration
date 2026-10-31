@@ -18,6 +18,8 @@ alongside one that has them.
 ### Changed
 - Desktop games no longer link OpenGL: the SDL3 package draws with SDL's GPU
   API.
+- Desktop builds run at below-normal priority and with as many compile jobs
+  as free memory holds (needs editor 0.22).
 
 ## 0.21.0
 

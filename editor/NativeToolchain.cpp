@@ -1,4 +1,5 @@
 #include "NativeToolchain.h"
+#include <deki-editor/BuildLoad.h>
 #include <deki-editor/Localization.h>
 #include <deki-editor/ShellCommand.h>
 #include <filesystem>
@@ -381,7 +382,10 @@ int NativeToolchain::ExecuteCommand(const std::string& command, const std::strin
     std::vector<char> cmdBuf(fullCommand.begin(), fullCommand.end());
     cmdBuf.push_back('\0');
 
-    BOOL success = CreateProcessA(NULL, cmdBuf.data(), NULL, NULL, TRUE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi);
+    // Below-normal priority, which cmake, ninja and the compilers inherit.
+    DekiEditor::PrepareBuildJobs();
+    BOOL success = CreateProcessA(NULL, cmdBuf.data(), NULL, NULL, TRUE,
+                                  CREATE_NO_WINDOW | DekiEditor::BuildPriorityFlag(), NULL, NULL, &si, &pi);
 
     CloseHandle(hWritePipe);
 
@@ -451,7 +455,8 @@ int NativeToolchain::ExecuteCommand(const std::string& command, const std::strin
                                     BuildOutputCallback outputCallback, std::atomic<bool>& cancelRequested)
 {
     std::string fullCommand = "cd \"" + workDir + "\" && " + command + " 2>&1";
-    FILE* pipe = popen(fullCommand.c_str(), "r");
+    DekiEditor::PrepareBuildJobs();
+    FILE* pipe = popen(DekiEditor::AtBuildPriority(fullCommand).c_str(), "r");
     if (!pipe)
     {
         return -1;
