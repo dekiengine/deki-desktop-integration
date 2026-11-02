@@ -978,6 +978,10 @@ bool NativeBuilder::GenerateCMakeLists(const std::string& projectPath, const std
     {
         file << "                " << define << "\n";
     }
+    for (const auto& define : config.CapabilityDefines())
+    {
+        file << "                " << define << "\n";
+    }
     for (const auto& define : packageDefines)
     {
         file << "                " << define << "\n";
@@ -1062,6 +1066,11 @@ bool NativeBuilder::GenerateCMakeLists(const std::string& projectPath, const std
     }
     file << "    ${PACKAGE_DEFINES}\n";
     for (const auto& define : config.defines)
+    {
+        file << "    " << define << "\n";
+    }
+    // DEKI_CAPABILITY_OPENGL where the platform provides opengl.
+    for (const auto& define : config.CapabilityDefines())
     {
         file << "    " << define << "\n";
     }
