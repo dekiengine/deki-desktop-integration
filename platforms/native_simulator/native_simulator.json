@@ -22,7 +22,8 @@
     "posix-process",
     "filesystem",
     "threads",
-    "sdl3"
+    "sdl3",
+    "opengl"
   ],
   "screenHeight": 240,
   "screenWidth": 320
