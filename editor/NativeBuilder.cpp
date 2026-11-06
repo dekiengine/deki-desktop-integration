@@ -752,7 +752,7 @@ CMakeGen::ExecutableLibrary NativeBuilder::Sdl3Library() const
 }
 
 // Copies the internal storage next to the exe so the simulator's F:/
-// resolves (DesktopFileSystem maps it relative to the working directory, and
+// resolves (the engine's HostFileSystem maps it relative to the working directory, and
 // the exe runs from its own folder):
 //   flash/ <- project_data.bin, the boot scene and assets/ (F:/assets/),
 //             written by FirmwareBuildService into <build>/spiffs_data

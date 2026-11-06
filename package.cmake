@@ -4,6 +4,6 @@ set(PACKAGE_PREFIX "DekiDesktopHAL")
 set(PACKAGE_UPPER "DESKTOP_HAL")
 set(PACKAGE_TARGET "deki-desktop-hal")
 set(PACKAGE_FILE_PREFIX "DesktopHAL")
-# Platform-host package: the entry (DesktopHALPackage.cpp) owns main() and brings up
-# the desktop memory + filesystem HAL directly, so there are no reflected components.
+# No runtime code of its own: a desktop game's main(), memory and file system
+# are the engine's (deki-engine-hosted). The entry is the plugin's exports.
 set(PACKAGE_ENTRY DesktopHALPackage.cpp)

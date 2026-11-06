@@ -11,6 +11,16 @@ alongside one that has them.
 ## Unreleased
 
 ### Changed
+- **`main()`, the memory and the file system are the engine's now**
+  (`deki-engine-hosted`: `src/hosted/HostedMain.cpp`, and
+  `Deki::HostFileSystem` for `DesktopFileSystem`). Any target that runs a game
+  as a program uses them without this package, the Miyoo Mini among them;
+  this package keeps the desktop simulator platform and its builder. Needs
+  the editor and engine release that adds `deki-engine-hosted`: with an older
+  one a desktop game has no `main()`, and with this package's older version
+  a newer engine's game has two.
+
+### Changed
 - The desktop game's CMake is written by the editor's
   `CMakeGen::GenerateExecutableCMakeLists`, which other targets built as one
   program (the Miyoo Mini, in deki-miyoo-boards) share; this package gives it

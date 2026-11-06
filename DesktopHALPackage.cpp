@@ -1,24 +1,13 @@
-// Desktop platform host. Owns the program entry (main) and sets up the
-// memory and filesystem providers before the engine starts, as
-// ESP32HALPackage.cpp does with ESP32BackendInit before app_main(). Display,
-// input and time come from deki-sdl3-integration, as lovyangfx supplies the
-// display next to the ESP32 HAL.
+// The desktop package's entry, for the editor's plugin loader. A game built
+// as a desktop program starts at the engine's own main()
+// (deki-engine-hosted), which sets up the memory and the file system; the
+// desktop simulator's display, input and time come from
+// deki-sdl3-integration.
 
 #include "DesktopHALPackage.h"
 #include <deki/interop/Plugin.h>
 #include <deki/reflection/ComponentRegistry.h>
 #include <deki/reflection/ComponentFactory.h>
-
-#if defined(SIMULATOR)
-#include <deki/Main.h>
-#include <deki/LogSystem.h>
-#include <deki/providers/Memory.h>
-#include <deki/providers/FileSystem.h>
-#include <deki/providers/IFileSystem.h>
-#include <deki/providers/HostMemoryProvider.h>
-#include "DesktopFileSystem.h"
-#include <cstdio>
-#endif
 
 extern void DekiDesktopHALRegisterComponents();
 extern int DekiDesktopHALGetAutoComponentCount();
@@ -26,55 +15,6 @@ extern const Deki::ComponentMeta* DekiDesktopHALGetAutoComponentMeta(int index);
 
 namespace DekiDesktop
 {
-
-// =============================================================================
-// Desktop platform entry + HAL bring-up (standalone simulator build)
-// =============================================================================
-#if defined(SIMULATOR)
-
-}  // namespace DekiDesktop
-
-// The program's entry point. Must stay at global scope: the runtime looks for
-// ::main only, and inside a namespace the link fails with an error naming
-// WinMain, far from the cause. The using-directive lets the body reach the
-// package's own helpers.
-using namespace DekiDesktop;
-
-int main(int argc, char* argv[])
-{
-    (void)argc;
-    (void)argv;
-    setvbuf(stdout, nullptr, _IONBF, 0);  // unbuffered: logs survive a crash
-    // The standalone simulator has no editor console: write engine logs to a
-    // file in the working directory (next to flash/ and storage/) and echo
-    // them on stdout.
-    Deki::LogSystem::SetLogCallback(
-        [](Deki::LogLevel level, const std::string& msg, const char* file, int line)
-        {
-            (void)level;
-            (void)file;
-            (void)line;
-            static FILE* lf = fopen("dekigame.log", "w");
-            if (lf)
-            {
-                fprintf(lf, "%s\n", msg.c_str());
-                fflush(lf);
-            }
-            printf("%s\n", msg.c_str());
-        });
-    // The providers must exist before Engine::Initialize() runs, since it
-    // initializes Memory and FileSystem. Set here rather than in a static
-    // initializer, so static-init order cannot bite the provider singletons.
-    Deki::Memory::SetBackend(new Deki::HostMemoryProvider());
-    // Engine::Initialize() then finds the assets in F:/assets/ (./flash/assets/).
-    Deki::FileSystem::SetFileSystem(new Deki::DesktopFileSystem());
-    return Deki::Main();
-}
-
-namespace DekiDesktop
-{
-
-#endif  // SIMULATOR
 
 #ifdef DEKI_EDITOR
 

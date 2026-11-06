@@ -1,9 +1,9 @@
 #pragma once
 
-// Desktop HAL package. Provides the program entry (main) and sets up the
-// desktop memory and filesystem providers before the engine starts (see
-// DesktopHALPackage.cpp, under SIMULATOR). Display, input and time come from
-// the deki-sdl3-integration package.
+// Desktop package: the desktop simulator platform and its builder. A game
+// built as a desktop program starts at the engine's own main()
+// (deki-engine-hosted), which sets up the memory and the file system.
+// Display, input and time come from the deki-sdl3-integration package.
 
 // DLL export macro
 #ifdef _WIN32
