@@ -5,7 +5,6 @@
     "-g"
   ],
   "defines": [
-    "SIMULATOR",
     "DEBUG",
     "DEKI_LOG_ENABLED",
     "DEKI_3D_TILE_SIZE=128"
@@ -19,7 +18,7 @@
   },
   "id": "native_simulator",
   "provides": [
-    "desktop-os",
+    "hosted",
     "posix-process",
     "filesystem",
     "threads",

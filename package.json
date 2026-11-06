@@ -4,7 +4,7 @@
   "minEngine": "0.22.0",
   "buildDefine": "DEKI_PACKAGE_DESKTOP_HAL",
   "platformRequires": [
-    "desktop-os"
+    "hosted"
   ],
   "requires": [],
   "features": [],

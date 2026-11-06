@@ -11,6 +11,10 @@ alongside one that has them.
 ## Unreleased
 
 ### Changed
+- **`platformRequires` is `hosted`** (it was `desktop-os`), and the
+  `native_simulator` platform provides `hosted` and no longer lists the
+  `SIMULATOR` define: the build defines `DEKI_HOSTED` itself. Needs the editor
+  release that names the capability `hosted`.
 - **`main()`, the memory and the file system are the engine's now**
   (`deki-engine-hosted`: `src/hosted/HostedMain.cpp`, and
   `Deki::HostFileSystem` for `DesktopFileSystem`). Any target that runs a game
