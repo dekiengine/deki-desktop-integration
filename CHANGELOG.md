@@ -8,6 +8,15 @@ breaking change bumps the minor across the editor, the engine and every
 package together, so a package with no changes of its own is still released
 alongside one that has them.
 
+## Unreleased
+
+### Changed
+- The desktop game's CMake is written by the editor's
+  `CMakeGen::GenerateExecutableCMakeLists`, which other targets built as one
+  program (the Miyoo Mini, in deki-miyoo-boards) share; this package gives it
+  SDL3. The file it writes is the same as before. Needs the editor release
+  that adds `ExecutableCMakeGen.h`; raise `minEngine` to it when releasing.
+
 ## 0.22.0
 
 ### Added

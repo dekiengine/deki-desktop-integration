@@ -3,6 +3,7 @@
 #include <deki-editor/IconsTabler.h>
 #include <deki-editor/Localization.h>
 
+#include <deki-editor/build/ExecutableCMakeGen.h>
 #include <deki-editor/build/FirmwareBuilderBase.h>
 #include "NativeToolchain.h"
 #include <map>
@@ -13,8 +14,9 @@ namespace DekiEditor
 {
 
 /// Builds standalone desktop executables with CMake and the system C++
-/// compiler. Generates a CMakeLists.txt holding the engine, SDL3 and the game
-/// sources. NativeToolchain finds the compiler and runs the commands.
+/// compiler. The CMakeLists.txt (the engine, SDL3 and the game sources) is
+/// CMakeGen::GenerateExecutableCMakeLists with SDL3 added. NativeToolchain
+/// finds the compiler and runs the commands.
 class NativeBuilder : public FirmwareBuilderBase
 {
 public:
@@ -83,6 +85,8 @@ private:
 
     static const char* HostPrebuiltKey();
     bool PrepareNativeDependencies(const std::string& projectPath, BuildOutputCallback outputCallback);
+    // SDL3 as the shared generator takes a library, from m_NativeDeps.
+    CMakeGen::ExecutableLibrary Sdl3Library() const;
 
     // Run on the build thread.
     void DoBuild(const std::string& projectPath, BuildOutputCallback outputCallback,
