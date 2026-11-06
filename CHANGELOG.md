@@ -11,6 +11,11 @@ alongside one that has them.
 ## Unreleased
 
 ### Changed
+- **The platform is called Desktop** (it was "Desktop Simulator (SDL3)"): it
+  builds the PC version of a game for Windows, Linux or macOS, and simulates
+  no board; the editor's play mode is where a game runs while it is made. Its
+  id stays `native_simulator`, so a project keeps its target; a project's own
+  copy of the platform takes the new name on **Update**.
 - **`platformRequires` is `hosted`** (it was `desktop-os`), and the
   `native_simulator` platform provides `hosted` and no longer lists the
   `SIMULATOR` define: the build defines `DEKI_HOSTED` itself. Needs the editor

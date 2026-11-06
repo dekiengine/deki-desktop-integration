@@ -1,6 +1,6 @@
 #pragma once
 
-// Desktop package: the desktop simulator platform and its builder. A game
+// Desktop package: the Desktop platform and its builder. A game
 // built as a desktop program starts at the engine's own main()
 // (deki-engine-hosted), which sets up the memory and the file system.
 // Display, input and time come from the deki-sdl3-integration package.

@@ -1,7 +1,7 @@
 // The desktop package's entry, for the editor's plugin loader. A game built
 // as a desktop program starts at the engine's own main()
 // (deki-engine-hosted), which sets up the memory and the file system; the
-// desktop simulator's display, input and time come from
+// desktop build's display, input and time come from
 // deki-sdl3-integration.
 
 #include "DesktopHALPackage.h"

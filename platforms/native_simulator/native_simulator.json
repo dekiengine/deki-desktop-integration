@@ -9,7 +9,7 @@
     "DEKI_LOG_ENABLED",
     "DEKI_3D_TILE_SIZE=128"
   ],
-  "displayName": "Desktop Simulator (SDL3)",
+  "displayName": "Desktop",
   "family": "native",
   "framework": "native",
   "frameworkOptions": {
