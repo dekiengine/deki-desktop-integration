@@ -8,9 +8,11 @@ breaking change bumps the minor across the editor, the engine and every
 package together, so a package with no changes of its own is still released
 alongside one that has them.
 
-## Unreleased
+## 0.30.0
 
 ### Changed
+- `minEngine` 0.30.0: built against engine 0.30.0. A build of this package
+  from before does not load and is rebuilt.
 - **The platform is called Desktop** (it was "Desktop Simulator (SDL3)"): it
   builds the PC version of a game for Windows, Linux or macOS, and simulates
   no board; the editor's play mode is where a game runs while it is made. Its
