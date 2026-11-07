@@ -56,7 +56,7 @@
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">deki-desktop-integration<span id="projectnumber">&#160;0.30.0</span>
+   <div id="projectname">deki-desktop-integration<span id="projectnumber">&#160;0.30.3</span>
    </div>
    <div id="projectbrief">Deki package reference</div>
   </td>
@@ -114,15 +114,27 @@ document.addEventListener('DOMContentLoaded',() => { initNavTree('index.html',''
 <img src="deki-desktop-integration.png" alt=""/>
 </div>
     <p>Desktop platform memory and filesystem providers</p>
-<p>Repository: <a href="https://github.com/dekiengine/deki-desktop-integration">github.com/dekiengine/deki-desktop-integration</a> · Latest release: 0.30.0 · Needs engine 0.30.0+</p>
+<p>Repository: <a href="https://github.com/dekiengine/deki-desktop-integration">github.com/dekiengine/deki-desktop-integration</a> · Latest release: 0.30.2 · Needs engine 0.30.2+</p>
 <p>Install with <span class="tt">DekiEditor --packages-add deki-desktop-integration &lt;project&gt;</span>, or from the Package Manager. The engine's own components and C++ API are in the <a href="https://dekiengine.github.io/docs/">Deki docs</a>.</p>
 <p>Shown in the editor as <b>Desktop Integration</b>.</p>
 <p>This package is a driver or a library the engine calls into. Its README has the details.</p>
 <h1 class="doxsection"><a class="anchor" id="changelog"></a>
 Changelog</h1>
 <h2 class="doxsection"><a class="anchor" id="autotoc_md0"></a>
-0.30.0</h2>
+0.30.2</h2>
 <h2 class="doxsection"><a class="anchor" id="autotoc_md1"></a>
+Fixed</h2>
+<ul>
+<li>A Desktop build uses the tools the editor builds everything with: the toolchain its download carries (GCC, CMake, Ninja), else the computer's. A computer with no compiler of its own builds, and Linux needs no Make. A build folder configured with other tools is configured afresh, and the build says so.</li>
+</ul>
+<h2 class="doxsection"><a class="anchor" id="autotoc_md2"></a>
+Changed</h2>
+<ul>
+<li><span class="tt">minEngine</span> 0.30.2: it asks the editor for its toolchain (<span class="tt">&lt;deki-editor/BundledToolchain.h&gt;</span>, new in 0.30.2).</li>
+</ul>
+<h2 class="doxsection"><a class="anchor" id="autotoc_md3"></a>
+0.30.0</h2>
+<h2 class="doxsection"><a class="anchor" id="autotoc_md4"></a>
 Changed</h2>
 <ul>
 <li><span class="tt">minEngine</span> 0.30.0: built against engine 0.30.0. A build of this package from before does not load and is rebuilt.</li>
@@ -130,28 +142,14 @@ Changed</h2>
 <li><b><span class="tt">platformRequires</span> is <span class="tt">hosted</span></b> (it was <span class="tt">desktop-os</span>), and the <span class="tt">native_simulator</span> platform provides <span class="tt">hosted</span> and no longer lists the <span class="tt">SIMULATOR</span> define: the build defines <span class="tt">DEKI_HOSTED</span> itself. Needs the editor release that names the capability <span class="tt">hosted</span>.</li>
 <li><b><span class="tt">main()</span>, the memory and the file system are the engine's now</b> (<span class="tt">deki-engine-hosted</span>: <span class="tt">src/hosted/HostedMain.cpp</span>, and <span class="tt">Deki::HostFileSystem</span> for <span class="tt">DesktopFileSystem</span>). Any target that runs a game as a program uses them without this package, the Miyoo Mini among them; this package keeps the desktop simulator platform and its builder. Needs the editor and engine release that adds <span class="tt">deki-engine-hosted</span>: with an older one a desktop game has no <span class="tt">main()</span>, and with this package's older version a newer engine's game has two.</li>
 </ul>
-<h2 class="doxsection"><a class="anchor" id="autotoc_md2"></a>
+<h2 class="doxsection"><a class="anchor" id="autotoc_md5"></a>
 Changed</h2>
 <ul>
 <li>The desktop game's CMake is written by the editor's <span class="tt">CMakeGen::GenerateExecutableCMakeLists</span>, which other targets built as one program (the Miyoo Mini, in deki-miyoo-boards) share; this package gives it SDL3. The file it writes is the same as before. Needs the editor release that adds <span class="tt">ExecutableCMakeGen.h</span>; raise <span class="tt">minEngine</span> to it when releasing.</li>
 </ul>
-<h2 class="doxsection"><a class="anchor" id="autotoc_md3"></a>
-0.22.0</h2>
-<h2 class="doxsection"><a class="anchor" id="autotoc_md4"></a>
-Added</h2>
-<ul>
-<li>Desktop games on Windows have the Deki cat as their icon. A package's <span class="tt">resources/windows/*.rc</span> files are compiled into a Windows game; this package's gives the icon.</li>
-</ul>
-<h2 class="doxsection"><a class="anchor" id="autotoc_md5"></a>
-Changed</h2>
-<ul>
-<li>Desktop games no longer link OpenGL: the SDL3 package draws with SDL's GPU API.</li>
-<li>Desktop builds run at below-normal priority and with as many compile jobs as free memory holds (needs editor 0.22).</li>
-<li><span class="tt">minEngine</span> 0.22.0: built against engine 0.22.0. A build of this package from before does not load and is rebuilt.</li>
-</ul>
 <p>Earlier releases: <a href="https://github.com/dekiengine/deki-desktop-integration/blob/master/CHANGELOG.md">CHANGELOG.md</a>.</p>
 <hr  />
-<p>Generated from the package's reflection data (engine 0.30.0). Property names are the keys used in scene files. Renames keep an alias (<a href="https://github.com/dekiengine/deki-editor/blob/master/COMPATIBILITY.md">compatibility</a>). </p>
+<p>Generated from the package's reflection data (engine 0.30.3). Property names are the keys used in scene files. Renames keep an alias (<a href="https://github.com/dekiengine/deki-editor/blob/master/COMPATIBILITY.md">compatibility</a>). </p>
 </div></div><!-- PageDoc -->
 <a href="doxygen_crawl.html"></a>
 </div><!-- contents -->

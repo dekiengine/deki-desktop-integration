@@ -57,7 +57,7 @@
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">deki-desktop-integration<span id="projectnumber">&#160;0.30.0</span>
+   <div id="projectname">deki-desktop-integration<span id="projectnumber">&#160;0.30.3</span>
    </div>
    <div id="projectbrief">Deki 包参考</div>
   </td>
@@ -115,7 +115,7 @@ document.addEventListener('DOMContentLoaded',() => { initNavTree('index.html',''
 <img src="deki-desktop-integration.png" alt=""/>
 </div>
     <p>桌面平台 HAL：为桌面构建提供内存和文件系统提供者。</p>
-<p>仓库：<a href="https://github.com/dekiengine/deki-desktop-integration">github.com/dekiengine/deki-desktop-integration</a> · 最新版本：0.30.0 · 需要引擎 0.30.0 或更高版本</p>
+<p>仓库：<a href="https://github.com/dekiengine/deki-desktop-integration">github.com/dekiengine/deki-desktop-integration</a> · 最新版本：0.30.2 · 需要引擎 0.30.2 或更高版本</p>
 <p>使用 <span class="tt">DekiEditor --packages-add deki-desktop-integration &lt;project&gt;</span> 或通过包管理器安装。引擎自身的组件和 C++ API 见 <a href="https://dekiengine.github.io/docs/zh/">Deki 文档</a>。</p>
 <p>在编辑器中显示为 **Desktop Integration**。</p>
 <p>这个包是供引擎调用的驱动或库。详情见其 README。</p>
@@ -123,8 +123,20 @@ document.addEventListener('DOMContentLoaded',() => { initNavTree('index.html',''
 更新日志</h1>
 <p>更新日志为英文。</p>
 <h2 class="doxsection"><a class="anchor" id="autotoc_md0"></a>
-0.30.0</h2>
+0.30.2</h2>
 <h2 class="doxsection"><a class="anchor" id="autotoc_md1"></a>
+Fixed</h2>
+<ul>
+<li>A Desktop build uses the tools the editor builds everything with: the toolchain its download carries (GCC, CMake, Ninja), else the computer's. A computer with no compiler of its own builds, and Linux needs no Make. A build folder configured with other tools is configured afresh, and the build says so.</li>
+</ul>
+<h2 class="doxsection"><a class="anchor" id="autotoc_md2"></a>
+Changed</h2>
+<ul>
+<li><span class="tt">minEngine</span> 0.30.2: it asks the editor for its toolchain (<span class="tt">&lt;deki-editor/BundledToolchain.h&gt;</span>, new in 0.30.2).</li>
+</ul>
+<h2 class="doxsection"><a class="anchor" id="autotoc_md3"></a>
+0.30.0</h2>
+<h2 class="doxsection"><a class="anchor" id="autotoc_md4"></a>
 Changed</h2>
 <ul>
 <li><span class="tt">minEngine</span> 0.30.0: built against engine 0.30.0. A build of this package from before does not load and is rebuilt.</li>
@@ -132,28 +144,14 @@ Changed</h2>
 <li><b><span class="tt">platformRequires</span> is <span class="tt">hosted</span></b> (it was <span class="tt">desktop-os</span>), and the <span class="tt">native_simulator</span> platform provides <span class="tt">hosted</span> and no longer lists the <span class="tt">SIMULATOR</span> define: the build defines <span class="tt">DEKI_HOSTED</span> itself. Needs the editor release that names the capability <span class="tt">hosted</span>.</li>
 <li><b><span class="tt">main()</span>, the memory and the file system are the engine's now</b> (<span class="tt">deki-engine-hosted</span>: <span class="tt">src/hosted/HostedMain.cpp</span>, and <span class="tt">Deki::HostFileSystem</span> for <span class="tt">DesktopFileSystem</span>). Any target that runs a game as a program uses them without this package, the Miyoo Mini among them; this package keeps the desktop simulator platform and its builder. Needs the editor and engine release that adds <span class="tt">deki-engine-hosted</span>: with an older one a desktop game has no <span class="tt">main()</span>, and with this package's older version a newer engine's game has two.</li>
 </ul>
-<h2 class="doxsection"><a class="anchor" id="autotoc_md2"></a>
+<h2 class="doxsection"><a class="anchor" id="autotoc_md5"></a>
 Changed</h2>
 <ul>
 <li>The desktop game's CMake is written by the editor's <span class="tt">CMakeGen::GenerateExecutableCMakeLists</span>, which other targets built as one program (the Miyoo Mini, in deki-miyoo-boards) share; this package gives it SDL3. The file it writes is the same as before. Needs the editor release that adds <span class="tt">ExecutableCMakeGen.h</span>; raise <span class="tt">minEngine</span> to it when releasing.</li>
 </ul>
-<h2 class="doxsection"><a class="anchor" id="autotoc_md3"></a>
-0.22.0</h2>
-<h2 class="doxsection"><a class="anchor" id="autotoc_md4"></a>
-Added</h2>
-<ul>
-<li>Desktop games on Windows have the Deki cat as their icon. A package's <span class="tt">resources/windows/*.rc</span> files are compiled into a Windows game; this package's gives the icon.</li>
-</ul>
-<h2 class="doxsection"><a class="anchor" id="autotoc_md5"></a>
-Changed</h2>
-<ul>
-<li>Desktop games no longer link OpenGL: the SDL3 package draws with SDL's GPU API.</li>
-<li>Desktop builds run at below-normal priority and with as many compile jobs as free memory holds (needs editor 0.22).</li>
-<li><span class="tt">minEngine</span> 0.22.0: built against engine 0.22.0. A build of this package from before does not load and is rebuilt.</li>
-</ul>
 <p>更早的版本：<a href="https://github.com/dekiengine/deki-desktop-integration/blob/master/CHANGELOG.md">CHANGELOG.md</a></p>
 <hr  />
-<p>由包的反射数据生成（引擎 0.30.0）。属性名就是场景文件中使用的键。重命名后会保留别名（<a href="https://github.com/dekiengine/deki-editor/blob/master/COMPATIBILITY.md">兼容性</a>）。 </p>
+<p>由包的反射数据生成（引擎 0.30.3）。属性名就是场景文件中使用的键。重命名后会保留别名（<a href="https://github.com/dekiengine/deki-editor/blob/master/COMPATIBILITY.md">兼容性</a>）。 </p>
 </div></div><!-- PageDoc -->
 <a href="doxygen_crawl.html"></a>
 </div><!-- contents -->
