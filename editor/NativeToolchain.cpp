@@ -114,6 +114,7 @@ void NativeToolchain::ScanSystemCompilers() const
     // builds too; the ones below are what else this computer has.
     {
         const std::string own = DekiEditor::ProjectCxxCompiler();
+        m_EditorCompiler = own;
         std::error_code ec;
         if (fs::path(own).is_absolute() && fs::exists(own, ec))
         {
@@ -307,10 +308,14 @@ std::string NativeToolchain::GetStatus() const
 
     if (m_Compilers.empty())
     {
+        // Where it looked, so the cause can be seen: the editor's own first.
+        const std::string looked = "the editor's (" + (m_EditorCompiler.empty() ? std::string("none") : m_EditorCompiler) +
 #ifdef _WIN32
-        return "No C++ compiler found. Install Visual Studio or MinGW.";
+                                   "), Visual Studio, C:/msys64/mingw64/bin, C:/mingw64/bin";
+        return "No C++ compiler found; looked for " + looked + ". Install Visual Studio or MinGW.";
 #else
-        return "No C++ compiler found. Install GCC or Clang.";
+                                   "), /usr/bin and /usr/local/bin (g++, clang++)";
+        return "No C++ compiler found; looked for " + looked + ". Install GCC or Clang.";
 #endif
     }
 

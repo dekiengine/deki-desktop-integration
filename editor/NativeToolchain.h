@@ -45,6 +45,7 @@ private:
     mutable bool m_HasScanned = false;
     mutable std::vector<CompilerInfo> m_Compilers;
     mutable std::string m_CMakePath;
+    mutable std::string m_EditorCompiler;  // the one asked for first, found or not, for the status
 };
 
 }  // namespace DekiEditor
