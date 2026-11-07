@@ -1,5 +1,6 @@
 #include "NativeToolchain.h"
 #include <deki-editor/BuildLoad.h>
+#include <deki-editor/BundledToolchain.h>
 #include <deki-editor/Localization.h>
 #include <deki-editor/ShellCommand.h>
 #include <filesystem>
@@ -106,6 +107,23 @@ void NativeToolchain::ScanSystemCompilers() const
     m_HasScanned = true;
     m_Compilers.clear();
     m_CMakePath = FindCMake();
+
+    // First, the compiler the editor builds everything with: the toolchain
+    // its download carries, or the one it was built with. A Desktop build
+    // uses it (NativeBuilder), so a computer with no compiler of its own
+    // builds too; the ones below are what else this computer has.
+    {
+        const std::string own = DekiEditor::ProjectCxxCompiler();
+        std::error_code ec;
+        if (fs::path(own).is_absolute() && fs::exists(own, ec))
+        {
+            CompilerInfo info;
+            info.name = DekiEditor::HasBundledToolchain() ? "GCC (the editor's toolchain)" : "GCC (the editor's compiler)";
+            info.compilerPath = own;
+            info.isValid = true;
+            m_Compilers.push_back(info);
+        }
+    }
 
     try
     {
@@ -232,6 +250,15 @@ std::string NativeToolchain::FindVSInstallation() const
 
 std::string NativeToolchain::FindCMake() const
 {
+    // The editor's own (its download carries one), else one installed here.
+    {
+        const std::string own = DekiEditor::ResolveTool("cmake");
+        std::error_code ec;
+        if (fs::path(own).is_absolute() && fs::exists(own, ec))
+        {
+            return own;
+        }
+    }
 #ifdef _WIN32
     std::vector<std::string> cmakePaths = { "C:/Program Files/CMake/bin/cmake.exe",
                                             "C:/Program Files (x86)/CMake/bin/cmake.exe" };

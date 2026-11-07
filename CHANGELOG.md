@@ -8,6 +8,19 @@ breaking change bumps the minor across the editor, the engine and every
 package together, so a package with no changes of its own is still released
 alongside one that has them.
 
+## Unreleased
+
+### Fixed
+- A Desktop build uses the tools the editor builds everything with: the
+  toolchain its download carries (GCC, CMake, Ninja), else the computer's.
+  A computer with no compiler of its own builds, and Linux needs no Make. A
+  build folder configured with other tools is configured afresh, and the
+  build says so.
+
+### Changed
+- `minEngine` 0.30.2: it asks the editor for its toolchain
+  (`<deki-editor/BundledToolchain.h>`, new in 0.30.2).
+
 ## 0.30.0
 
 ### Changed

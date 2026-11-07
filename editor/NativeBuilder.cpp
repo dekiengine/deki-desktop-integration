@@ -13,6 +13,8 @@
 #include <deki-editor/build/CMakeGenUtils.h>
 #include <deki-editor/build/ExecutableCMakeGen.h>
 #include <deki-editor/EditorSettings.h>
+#include <deki-editor/BundledToolchain.h>
+#include <deki-editor/CMakeCacheReader.h>
 #include <deki-editor/ProcessLaunch.h>
 #include <deki-editor/build/PlatformConfig.h>
 #include "imgui.h"
@@ -302,7 +304,43 @@ void NativeBuilder::DoBuild(const std::string& projectPath, BuildOutputCallback 
         progressCallback(GetProgress());
     }
 
-    std::string configureCmd = "cmake" + EditorSettings::GetCMakeLocationArgs() + " -B build -S .";
+    // The tools the editor builds everything with (BundledToolchain.h): the
+    // ones its download carries, else this computer's. Named in full, so a
+    // computer with no compiler, make or cmake of its own builds as well, and
+    // the game is compiled by the compiler the engine expects.
+    auto cmakePath = [](std::string path)
+    {
+        std::replace(path.begin(), path.end(), '\\', '/');
+        return path;
+    };
+    const std::string cmake = DekiEditor::ResolveTool("cmake");
+    const std::string cxx = cmakePath(DekiEditor::ProjectCxxCompiler());
+    const std::string cc = cmakePath(DekiEditor::ProjectCCompiler());
+
+    // A build folder configured before with other tools (Make, or another
+    // compiler) is configured afresh: CMake will not change either in place.
+    {
+        const std::string cacheDir = (fs::path(buildDir) / "build").string();
+        const std::string generator = DekiEditor::ReadCMakeCacheVar(cacheDir, "CMAKE_GENERATOR");
+        const std::string cachedCxx = cmakePath(DekiEditor::ReadCMakeCacheVar(cacheDir, "CMAKE_CXX_COMPILER"));
+        if ((!generator.empty() && generator != "Ninja") || (!cachedCxx.empty() && cachedCxx != cxx))
+        {
+            std::error_code ec;
+            fs::remove(fs::path(cacheDir) / "CMakeCache.txt", ec);
+            fs::remove_all(fs::path(cacheDir) / "CMakeFiles", ec);
+            if (outputCallback)
+            {
+                outputCallback("Configuring afresh: this build used " + (generator.empty() ? cachedCxx : generator) +
+                                   ", and now builds with Ninja and " + cxx,
+                               false);
+            }
+        }
+    }
+
+    std::string configureCmd = "\"" + cmake + "\" -G Ninja -DCMAKE_MAKE_PROGRAM=\"" +
+                               cmakePath(DekiEditor::ResolveTool("ninja")) + "\" -DCMAKE_C_COMPILER=\"" + cc +
+                               "\" -DCMAKE_CXX_COMPILER=\"" + cxx + "\" -DDEKI_GXX16=\"" + cxx + "\"" +
+                               EditorSettings::GetCMakeLocationArgs() + " -B build -S .";
     if (m_CancelRequested)
     {
         SetError("Build cancelled");
@@ -331,7 +369,7 @@ void NativeBuilder::DoBuild(const std::string& projectPath, BuildOutputCallback 
         progressCallback(GetProgress());
     }
 
-    std::string buildCmd = "cmake --build build --config Release";
+    std::string buildCmd = "\"" + cmake + "\" --build build --config Release";
     if (m_CancelRequested)
     {
         SetError("Build cancelled");
