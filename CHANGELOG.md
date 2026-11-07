@@ -8,7 +8,7 @@ breaking change bumps the minor across the editor, the engine and every
 package together, so a package with no changes of its own is still released
 alongside one that has them.
 
-## Unreleased
+## 0.30.2
 
 ### Fixed
 - A Desktop build uses the tools the editor builds everything with: the
