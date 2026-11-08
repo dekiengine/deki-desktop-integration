@@ -8,6 +8,12 @@ breaking change bumps the minor across the editor, the engine and every
 package together, so a package with no changes of its own is still released
 alongside one that has them.
 
+## Unreleased
+
+### Fixed
+- macOS: a game built as a program links the SDL3 the editor built with clang.
+  Building SDL3 with GCC stopped at its Objective-C.
+
 ## 0.30.2
 
 ### Fixed

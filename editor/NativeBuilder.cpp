@@ -721,11 +721,25 @@ CMakeGen::ExecutableLibrary NativeBuilder::Sdl3Library() const
         sdl3.git = "https://github.com/libsdl-org/SDL.git";
     }
 
+#ifdef __APPLE__
+    // SDL's Objective-C needs clang, which this GCC build cannot be: the game
+    // links the SDL the editor's own build made with clang.
+    if (sdl3.cmakeDir.empty())
+    {
+        const fs::path clangSdl3 = fs::path(EditorSettings::GetDepsDir()) / "sdl3-clang";
+        if (fs::exists(clangSdl3 / "lib" / "cmake" / "SDL3" / "SDL3Config.cmake"))
+        {
+            sdl3.cmakeDir = (clangSdl3 / "lib" / "cmake" / "SDL3").string();
+            sdl3.includeDir = (clangSdl3 / "include").string();
+        }
+    }
+#endif
+
     std::ostringstream declare;
     declare << "# SDL3 " << sdl3.version << "\n";
     if (!sdl3.cmakeDir.empty())
     {
-        declare << "# Prebuilt release archive, fetched and verified by the editor.\n";
+        declare << "# Prebuilt SDL3, used through its CMake package.\n";
         declare << "set(SDL3_DIR \"" << ToCMakePath(sdl3.cmakeDir) << "\" CACHE PATH \"\" FORCE)\n";
         declare << "find_package(SDL3 " << sdl3.version << " EXACT REQUIRED CONFIG)\n";
         declare << "set(DEKI_SDL3_TARGET SDL3::SDL3)\n";
