@@ -1,4 +1,5 @@
 #include "NativeBuilder.h"
+#include "WebBuilder.h"
 #include <deki-editor/build/BuilderWidgets.h>
 #include <deki-editor/EditorTheme.h>
 #include <deki-editor/EditorUI.h>
@@ -521,7 +522,7 @@ static std::string SdlSourceVersion(const fs::path& srcDir)
     return std::to_string(major) + "." + std::to_string(minor) + "." + std::to_string(micro);
 }
 
-const char* NativeBuilder::HostPrebuiltKey()
+const char* NativeBuilder::PrebuiltKey() const
 {
 #if defined(_WIN32)
     return "windows-mingw";
@@ -551,7 +552,8 @@ bool NativeBuilder::PrepareNativeDependencies(const std::string& projectPath, Bu
     const auto allPackages = CMakeGen::ScanPackageManifests(projectPath);
     const auto activeIds =
         CMakeGen::ResolveActivePackages(allPackages, m_PackageDefines, m_PlatformConfig.Capabilities());
-    const std::string host = HostPrebuiltKey();
+    const char* const prebuiltKey = PrebuiltKey();
+    const std::string host = prebuiltKey ? prebuiltKey : "";
     const fs::path depsRoot = ProjectPaths::Generated(projectPath) / "deps";
 
     for (const auto& pkg : allPackages)
@@ -723,8 +725,9 @@ CMakeGen::ExecutableLibrary NativeBuilder::Sdl3Library() const
 
 #ifdef __APPLE__
     // SDL's Objective-C needs clang, which this GCC build cannot be: the game
-    // links the SDL the editor's own build made with clang.
-    if (sdl3.cmakeDir.empty())
+    // links the SDL the editor's own build made with clang. A web build is
+    // compiled for another machine and takes no prebuilt.
+    if (sdl3.cmakeDir.empty() && PrebuiltKey() != nullptr)
     {
         const fs::path clangSdl3 = fs::path(EditorSettings::GetDepsDir()) / "sdl3-clang";
         if (fs::exists(clangSdl3 / "lib" / "cmake" / "SDL3" / "SDL3Config.cmake"))
@@ -857,7 +860,8 @@ bool NativeBuilder::DeployPartitions(const std::string& projectPath, const std::
 class NativeEditorUI : public IPlatformEditorUI
 {
 public:
-    NativeEditorUI(const PlatformConfig& config)
+    NativeEditorUI(const PlatformConfig& config, std::string framework)
+        : m_Framework(std::move(framework))
     {
         m_ScreenWidth = config.screenWidth > 0 ? config.screenWidth : 320;
         m_ScreenHeight = config.screenHeight > 0 ? config.screenHeight : 240;
@@ -909,7 +913,7 @@ public:
 
     void ApplyToConfig(PlatformConfig& config) const override
     {
-        config.framework = "native";
+        config.framework = m_Framework;
         config.screenWidth = m_ScreenWidth;
         config.screenHeight = m_ScreenHeight;
         config.defines = m_Defines;
@@ -919,6 +923,7 @@ public:
     }
 
 private:
+    std::string m_Framework;
     int m_ScreenWidth = 320;
     int m_ScreenHeight = 240;
 
@@ -935,7 +940,7 @@ private:
 
 std::unique_ptr<IPlatformEditorUI> NativeBuilder::CreateEditorUI(const PlatformConfig& config) const
 {
-    return std::make_unique<NativeEditorUI>(config);
+    return std::make_unique<NativeEditorUI>(config, GetFrameworkId());
 }
 
 }  // namespace DekiEditor
@@ -963,7 +968,7 @@ extern "C"
 
     DEKI_BUILDER_API const char* DekiBuilderGetName(void)
     {
-        return "Native Builder";
+        return "Desktop and Web Builders";
     }
     DEKI_BUILDER_API const char* DekiBuilderGetVersion(void)
     {
@@ -971,11 +976,15 @@ extern "C"
     }
     DEKI_BUILDER_API int DekiBuilderGetBuilderCount(void)
     {
-        return 1;
+        return 2;
     }
 
     DEKI_BUILDER_API DekiEditor::ITargetBuilder* DekiBuilderCreateBuilder(int index)
     {
+        if (index == 1)
+        {
+            return new DekiEditor::WebBuilder();
+        }
         return index == 0 ? new DekiEditor::NativeBuilder() : nullptr;
     }
 

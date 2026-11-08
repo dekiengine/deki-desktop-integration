@@ -1,0 +1,23 @@
+{
+  "bootScene": "platforms/web/boot.scene",
+  "cxxFlags": [],
+  "defines": [
+    "DEKI_3D_TILE_SIZE=128"
+  ],
+  "displayName": "Web",
+  "family": "web",
+  "framework": "web",
+  "frameworkOptions": {
+    "displayBus": "SOFTWARE",
+    "displayDriver": "SDL3"
+  },
+  "id": "web",
+  "provides": [
+    "hosted",
+    "filesystem",
+    "sdl3",
+    "opengl"
+  ],
+  "screenHeight": 540,
+  "screenWidth": 960
+}

@@ -10,6 +10,11 @@ alongside one that has them.
 
 ## Unreleased
 
+### Added
+- A **Web** platform: builds a project for the browser with Emscripten, and
+  opens it from the Build panel. The Build panel installs Emscripten (about
+  2 GB). WebGL 2, no threads, and the game is shown at its own resolution.
+
 ### Fixed
 - macOS: a game built as a program links the SDL3 the editor built with clang.
   Building SDL3 with GCC stopped at its Objective-C.

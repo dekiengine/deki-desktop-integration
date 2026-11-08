@@ -67,7 +67,7 @@ public:
     // Platform editor UI
     std::unique_ptr<IPlatformEditorUI> CreateEditorUI(const PlatformConfig& config) const override;
 
-private:
+protected:
     NativeToolchain m_Toolchain;
 
     // A third-party library the active packages declared for this build,
@@ -83,11 +83,14 @@ private:
     };
     std::map<std::string, ResolvedNativeDependency> m_NativeDeps;
 
-    static const char* HostPrebuiltKey();
+    // Which prebuilt archive of a native dependency this build can use; null
+    // for none, so every dependency is built from source.
+    virtual const char* PrebuiltKey() const;
     bool PrepareNativeDependencies(const std::string& projectPath, BuildOutputCallback outputCallback);
     // SDL3 as the shared generator takes a library, from m_NativeDeps.
     CMakeGen::ExecutableLibrary Sdl3Library() const;
 
+private:
     // Run on the build thread.
     void DoBuild(const std::string& projectPath, BuildOutputCallback outputCallback,
                  BuildProgressCallback progressCallback);
