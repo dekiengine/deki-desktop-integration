@@ -31,7 +31,7 @@ std::string NativeToolchain::RunCommandSilent(const std::string& command)
     SECURITY_ATTRIBUTES sa;
     sa.nLength = sizeof(SECURITY_ATTRIBUTES);
     sa.bInheritHandle = TRUE;
-    sa.lpSecurityDescriptor = NULL;
+    sa.lpSecurityDescriptor = nullptr;
 
     HANDLE hReadPipe, hWritePipe;
     if (!CreatePipe(&hReadPipe, &hWritePipe, &sa, 0))
@@ -55,7 +55,8 @@ std::string NativeToolchain::RunCommandSilent(const std::string& command)
     std::vector<char> cmdBuf(cmdLine.begin(), cmdLine.end());
     cmdBuf.push_back('\0');
 
-    BOOL success = CreateProcessA(NULL, cmdBuf.data(), NULL, NULL, TRUE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi);
+    BOOL success =
+        CreateProcessA(nullptr, cmdBuf.data(), nullptr, nullptr, TRUE, CREATE_NO_WINDOW, nullptr, nullptr, &si, &pi);
 
     CloseHandle(hWritePipe);
 
@@ -63,7 +64,7 @@ std::string NativeToolchain::RunCommandSilent(const std::string& command)
     {
         char buffer[4096];
         DWORD bytesRead;
-        while (ReadFile(hReadPipe, buffer, sizeof(buffer) - 1, &bytesRead, NULL) && bytesRead > 0)
+        while (ReadFile(hReadPipe, buffer, sizeof(buffer) - 1, &bytesRead, nullptr) && bytesRead > 0)
         {
             buffer[bytesRead] = '\0';
             result += buffer;
@@ -390,7 +391,7 @@ int NativeToolchain::ExecuteCommand(const std::string& command, const std::strin
     SECURITY_ATTRIBUTES sa;
     sa.nLength = sizeof(SECURITY_ATTRIBUTES);
     sa.bInheritHandle = TRUE;
-    sa.lpSecurityDescriptor = NULL;
+    sa.lpSecurityDescriptor = nullptr;
 
     HANDLE hReadPipe, hWritePipe;
     if (!CreatePipe(&hReadPipe, &hWritePipe, &sa, 0))
@@ -416,8 +417,8 @@ int NativeToolchain::ExecuteCommand(const std::string& command, const std::strin
 
     // Below-normal priority, which cmake, ninja and the compilers inherit.
     DekiEditor::PrepareBuildJobs();
-    BOOL success = CreateProcessA(NULL, cmdBuf.data(), NULL, NULL, TRUE,
-                                  CREATE_NO_WINDOW | DekiEditor::BuildPriorityFlag(), NULL, NULL, &si, &pi);
+    BOOL success = CreateProcessA(nullptr, cmdBuf.data(), nullptr, nullptr, TRUE,
+                                  CREATE_NO_WINDOW | DekiEditor::BuildPriorityFlag(), nullptr, nullptr, &si, &pi);
 
     CloseHandle(hWritePipe);
 
@@ -431,7 +432,7 @@ int NativeToolchain::ExecuteCommand(const std::string& command, const std::strin
     DWORD bytesRead;
     std::string lineBuffer;
 
-    while (ReadFile(hReadPipe, buffer, sizeof(buffer) - 1, &bytesRead, NULL) && bytesRead > 0)
+    while (ReadFile(hReadPipe, buffer, sizeof(buffer) - 1, &bytesRead, nullptr) && bytesRead > 0)
     {
         if (cancelRequested)
         {

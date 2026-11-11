@@ -19,6 +19,8 @@
 #include <deki-editor/ProcessLaunch.h>
 #include <deki-editor/build/PlatformConfig.h>
 #include "imgui.h"
+#include "imgui_internal.h"
+#include <deki/interop/Plugin.h>
 #include <filesystem>
 #include <sstream>
 #include <algorithm>
@@ -961,8 +963,9 @@ extern "C"
 {
     DEKI_BUILDER_API const DekiBuilderAbi* DekiBuilderGetAbi(void)
     {
-        static const DekiBuilderAbi kAbi = DekiBuilderThisAbi((uint32_t)sizeof(DekiEditor::PlatformConfig),
-                                                              (uint32_t)sizeof(DekiEditor::CMakeGen::PackageEntry));
+        static const DekiBuilderAbi kAbi =
+            DekiBuilderThisAbi(static_cast<uint32_t>(sizeof(DekiEditor::PlatformConfig)),
+                               static_cast<uint32_t>(sizeof(DekiEditor::CMakeGen::PackageEntry)));
         return &kAbi;
     }
 
@@ -994,3 +997,23 @@ extern "C"
     }
 
 }  // extern "C"
+
+// This package calls ImGui directly, which runs on this DLL's own copy of it. The
+// editor hands that copy its context here; without these the first call writes
+// through a null context.
+extern "C"
+{
+    DEKI_PLUGIN_API void DekiPluginSetImGuiContext(void* context)
+    {
+        ImGui::SetCurrentContext(static_cast<ImGuiContext*>(context));
+        if (context != nullptr)
+        {
+            ImTextInitClassifiers();
+        }
+    }
+
+    DEKI_PLUGIN_API unsigned int DekiPluginGetImGuiContextSize(void)
+    {
+        return sizeof(ImGuiContext);
+    }
+}
