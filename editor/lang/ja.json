@@ -10,5 +10,6 @@
     "Linker Flags": "リンカーフラグ",
     "Preprocessor Defines": "プリプロセッサー定義",
     "Resolution": "解像度",
-    "Run your project on this desktop, through the SDL3 simulator": "SDL3 シミュレーターを使って、このデスクトップでプロジェクトを実行します"
+    "Run your project on this desktop, through the SDL3 simulator": "SDL3 シミュレーターを使って、このデスクトップでプロジェクトを実行します",
+    "Play your project in a web browser": "プロジェクトを Web ブラウザーでプレイします"
 }

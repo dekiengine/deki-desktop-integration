@@ -10,5 +10,6 @@
     "Linker Flags": "링커 플래그",
     "Preprocessor Defines": "전처리기 정의",
     "Resolution": "해상도",
-    "Run your project on this desktop, through the SDL3 simulator": "SDL3 시뮬레이터를 통해 이 데스크톱에서 프로젝트를 실행합니다"
+    "Run your project on this desktop, through the SDL3 simulator": "SDL3 시뮬레이터를 통해 이 데스크톱에서 프로젝트를 실행합니다",
+    "Play your project in a web browser": "웹 브라우저에서 프로젝트를 플레이합니다"
 }

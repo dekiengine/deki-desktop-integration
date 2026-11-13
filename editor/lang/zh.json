@@ -10,5 +10,6 @@
     "Linker Flags": "链接器标志",
     "Preprocessor Defines": "预处理器定义",
     "Resolution": "分辨率",
-    "Run your project on this desktop, through the SDL3 simulator": "通过 SDL3 模拟器在这台电脑上运行项目"
+    "Run your project on this desktop, through the SDL3 simulator": "通过 SDL3 模拟器在这台电脑上运行项目",
+    "Play your project in a web browser": "在网页浏览器中运行项目"
 }
